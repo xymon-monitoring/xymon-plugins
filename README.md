@@ -8,6 +8,7 @@ Provided on a best-effort basis. Tested on RHEL/CentOS/AlmaLinux 9.
 
 | Directory | Language | Xymon column | What it monitors |
 |---|---|---|---|
+| [`arista/`](arista/) | Python 3 | `cpu` `memory` `interfaces` `hardware` `net` `stp` | Arista EOS switch health — server-side SSH poller |
 | [`ciscoasa/`](ciscoasa/) | Python 3 | `cpu` `memory` `conn` `hardware` `net` `vpn` | Cisco ASA firewall health — server-side SSH poller |
 | [`dumpcheck/`](dumpcheck/) | Perl | `dumpcheck` | Backup file age and size regression |
 | [`freshfiles/`](freshfiles/) | Perl | `freshbackups` | File freshness — all files in a glob updated within time window |
@@ -54,4 +55,8 @@ All plugins expect the standard Xymon client environment sourced from `xymonclie
 Merged from:
 - [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) — dumpcheck, freshfiles, rhn, interface, raid-monitor
 - [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) — omsa-raid, openmanage
-- Local production customizations — postfixq, logfetchupdate, dumpcheck v96h/4%, ciscoasa
+- Local production customizations — postfixq, logfetchupdate, dumpcheck v96h/4%, ciscoasa, arista, remotehttp
+
+## Server configuration
+
+[`graphs.cfg`](graphs.cfg) contains RRD graph definitions for plugins that send bandwidth data (`arista`, `ciscoasa`). Append it to `/etc/xymon/graphs.cfg` on the Xymon server.

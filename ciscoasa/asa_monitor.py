@@ -332,9 +332,17 @@ def xymon_send_status(xymon_host, xymon_port, fqdn, column, color, body):
     print(f"  [{color.upper():6}] {fqdn}.{column}")
 
 
-def xymon_send_data(xymon_host, xymon_port, fqdn, rrd_name, ds_dict):
-    """Send a 'data' message so Xymon's rrddata channel stores bandwidth in RRD."""
-    lines = [f"data {fqdn}.{rrd_name}", f"[{rrd_name}.rrd]"]
+def xymon_send_data(xymon_host, xymon_port, fqdn, column, ds_dict, rrd_file=None):
+    """Send a 'data' message so Xymon's rrddata channel stores data in RRD.
+
+    column   — Xymon status column name (used in the 'data <fqdn>.<column>' header)
+    rrd_file — RRD filename stem (default: same as column).  Use when the target
+               RRD file must differ from the column name, e.g. column='cpu',
+               rrd_file='la' to feed Xymon's built-in la.rrd/[la] graph.
+    """
+    if rrd_file is None:
+        rrd_file = column
+    lines = [f"data {fqdn}.{column}", f"[{rrd_file}.rrd]"]
     for ds, val in ds_dict.items():
         lines.append(f"DS:{ds}:GAUGE:600:0:U {int(val)}")
     _xymon_tcp(xymon_host, xymon_port, "\n".join(lines) + "\n")
@@ -588,6 +596,12 @@ def poll(name, fqdn, cfg_path, cfg):
     # --- Send columns ---
     c, b = col_cpu(cpu_t, procs, uptime, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "cpu", c, b)
+    if cpu_t:
+        # Feed Xymon's built-in [la] graph (TEST2RRD="cpu=la").
+        # la.rrd:la stores value*100; the graph CDEF divides by 100 for display.
+        # We use the 5-min avg as the most stable indicator.
+        xymon_send_data(xymon_host, xymon_port, fqdn, "cpu",
+                        {"la": cpu_t[2] * 100}, rrd_file="la")
 
     c, b = col_memory(mem_t, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "memory", c, b)
@@ -602,8 +616,10 @@ def poll(name, fqdn, cfg_path, cfg):
                             iface_data, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "net", c, b)
     if in_bps is not None:
+        # ASA reports bytes/sec; multiply by 8 so net.rrd stores bits/sec
+        # (consistent with arista_monitor which parses native bps values)
         xymon_send_data(xymon_host, xymon_port, fqdn, "net",
-                        {"in": in_bps, "out": out_bps})
+                        {"in": in_bps * 8, "out": out_bps * 8})
 
     if not no_vpn:
         c, b = col_vpn(vpn_n, vpn_det, no_vpn)
