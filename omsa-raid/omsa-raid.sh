@@ -103,7 +103,7 @@ XYMONPROG=xy-omsa-raid.sh; export XYMONPROG
 # which should be put in www/help/$TEST.html.  It will
 # be linked into the display automatically.
 #
-TEST="raid"
+TEST="hardware"
 
 #########################################################
 #

@@ -125,7 +125,7 @@
 #
 # Test name
 #
-TEST="openmanage"
+TEST="hardware"
 
 # 
 # Name of our script for debugging purposes

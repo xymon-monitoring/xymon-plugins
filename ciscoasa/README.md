@@ -9,10 +9,9 @@ Server-side Xymon monitor for Cisco ASA firewalls. SSHs into each configured ASA
 | `cpu` | 5-sec / 1-min / 5-min CPU % + top processes by CPU |
 | `memory` | Memory used % with used/free MB |
 | `conn` | Active connection count + NAT translation table count |
-| `net` | Current rate (Mbps) + 95th-percentile vs bandwidth commitment |
-| `interfaces` | Per-interface in/out rate, errors, CRC, drops, resets |
-| `environment` | PSU, fan, temperature — trusts ASA's own OK/FAIL indicators |
-| `vpn` | IKEv2 tunnel count and state |
+| `hardware` | Physical health: PSU status, fan status, temperatures — trusts ASA's own OK/FAIL indicators |
+| `net` | Bandwidth (current rate + 95th-percentile vs commitment) and per-interface error/drop/reset counters |
+| `vpn` | IKEv2 tunnel count and state — **only sent if VPN is configured**; column is suppressed entirely on firewalls with no IKEv2 SA |
 
 ## Requirements
 

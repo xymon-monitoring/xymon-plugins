@@ -19,10 +19,10 @@ Xymon columns produced per firewall:
     cpu          CPU % with per-process breakdown (catches runaway DDNS etc.)
     memory       Memory used %
     conn         Active connections + NAT translation table count
-    net          Current rate + 95th-percentile vs configured commitment Mbps
-    interfaces   Per-interface error/drop rates
-    environment  PSU, fan, temperature (ASA-5545-X dual-PSU health)
-    vpn          IKEv2 tunnel count and state
+    hardware     Physical health: PSU, fans, temperature
+    net          Bandwidth (current rate + 95th-pct vs commitment) and
+                 per-interface error/drop rates
+    vpn          IKEv2 tunnel count and state (only sent if VPN is configured)
 
 Bandwidth samples are stored in a SQLite DB under DATA_DIR. The 95th
 percentile is calculated in pure Python over a configurable rolling window
@@ -56,7 +56,7 @@ YELLOW = "yellow"
 RED    = "red"
 PURPLE = "purple"
 
-COLUMNS = ["cpu", "memory", "conn", "net", "interfaces", "environment", "vpn"]
+COLUMNS = ["cpu", "memory", "conn", "hardware", "net"]
 
 
 # ---------------------------------------------------------------------------
@@ -484,6 +484,17 @@ def col_vpn(count, detail, no_vpn):
     return RED, f"IKEv2 tunnels: 0 UP\n\n{detail}"
 
 
+def col_net_combined(in_bps, out_bps, in_95, out_95, n_samp, iface_data,
+                     cfg, section):
+    """Combine bandwidth and interface error data into a single net column."""
+    c_bw,    b_bw    = col_bandwidth(in_bps, out_bps, in_95, out_95, n_samp, cfg, section)
+    c_iface, b_iface = col_interfaces(iface_data, cfg, section)
+
+    color = worst_color(c_bw, c_iface)
+    body  = f"=== Bandwidth ===\n{b_bw}\n=== Interfaces ===\n{b_iface}\n"
+    return color, body
+
+
 # ---------------------------------------------------------------------------
 # Poll one firewall
 # ---------------------------------------------------------------------------
@@ -584,20 +595,19 @@ def poll(name, fqdn, cfg_path, cfg):
     c, b = col_conn(conn, xlate, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "conn", c, b)
 
-    c, b = col_bandwidth(in_bps, out_bps, in_95, out_95, n_samp, cfg, section)
+    c, b = col_environment(env_iss, temp_c, cfg, section)
+    xymon_send_status(xymon_host, xymon_port, fqdn, "hardware", c, b)
+
+    c, b = col_net_combined(in_bps, out_bps, in_95, out_95, n_samp,
+                            iface_data, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "net", c, b)
     if in_bps is not None:
         xymon_send_data(xymon_host, xymon_port, fqdn, "net",
                         {"in": in_bps, "out": out_bps})
 
-    c, b = col_interfaces(iface_data, cfg, section)
-    xymon_send_status(xymon_host, xymon_port, fqdn, "interfaces", c, b)
-
-    c, b = col_environment(env_iss, temp_c, cfg, section)
-    xymon_send_status(xymon_host, xymon_port, fqdn, "environment", c, b)
-
-    c, b = col_vpn(vpn_n, vpn_det, no_vpn)
-    xymon_send_status(xymon_host, xymon_port, fqdn, "vpn", c, b)
+    if not no_vpn:
+        c, b = col_vpn(vpn_n, vpn_det, no_vpn)
+        xymon_send_status(xymon_host, xymon_port, fqdn, "vpn", c, b)
 
 
 # ---------------------------------------------------------------------------

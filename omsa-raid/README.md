@@ -55,7 +55,7 @@ Overall column colour is the worst colour seen across all controllers.
 
 ## Status column
 
-The Xymon column name is `raid`.
+The Xymon column name is `hardware`.
 
 ## Origin
 

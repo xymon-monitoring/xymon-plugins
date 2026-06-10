@@ -1,6 +1,6 @@
 # openmanage
 
-Monitors Dell server chassis health via Dell OpenManage using `omreport chassis`. Checks fans, intrusion, memory, power supplies, temperatures, voltages, hardware log, and batteries. Reports an `openmanage` column to the Xymon server.
+Monitors Dell server chassis health via Dell OpenManage using `omreport chassis`. Checks fans, intrusion, memory, power supplies, temperatures, voltages, hardware log, and batteries. Reports a `hardware` column to the Xymon server.
 
 Original script by Brian Smith-Sweeney. Version 0.56 (local patched).
 
@@ -55,7 +55,7 @@ OMSA messages can exceed Xymon's message size limit. If multiple components fail
 
 ## Status column
 
-The Xymon column name is `openmanage`.
+The Xymon column name is `hardware`.
 
 ## Origin
 

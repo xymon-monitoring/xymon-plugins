@@ -8,14 +8,15 @@ Provided on a best-effort basis. Tested on RHEL/CentOS/AlmaLinux 9.
 
 | Directory | Language | Xymon column | What it monitors |
 |---|---|---|---|
-| [`ciscoasa/`](ciscoasa/) | Python 3 | `cpu` `memory` `conn` `net` `interfaces` `environment` `vpn` | Cisco ASA firewall health — server-side SSH poller |
+| [`ciscoasa/`](ciscoasa/) | Python 3 | `cpu` `memory` `conn` `hardware` `net` `vpn` | Cisco ASA firewall health — server-side SSH poller |
 | [`dumpcheck/`](dumpcheck/) | Perl | `dumpcheck` | Backup file age and size regression |
 | [`freshfiles/`](freshfiles/) | Perl | `freshbackups` | File freshness — all files in a glob updated within time window |
 | [`interface/`](interface/) | Python 2 | `interface` | Network interface speed, duplex, and link state via `ethtool` |
 | [`logfetchupdate/`](logfetchupdate/) | sh | — | Downloads updated `logfetch` config from server (Terabithia) |
-| [`omsa-raid/`](omsa-raid/) | sh | `raid` | Dell PERC RAID via OpenManage `omreport` (OMSA) |
-| [`openmanage/`](openmanage/) | bash | `openmanage` | Dell chassis health (fans, temps, PSUs, memory) via `omreport chassis` |
+| [`omsa-raid/`](omsa-raid/) | sh | `hardware` | Dell PERC RAID via OpenManage `omreport` (OMSA) |
+| [`openmanage/`](openmanage/) | bash | `hardware` | Dell chassis health (fans, temps, PSUs, memory) via `omreport chassis` |
 | [`postfixq/`](postfixq/) | Perl | `postfixq` | Postfix mail queue depth (active + deferred) |
+| [`remotehttp/`](remotehttp/) | Python 3 | `remotehttp` (or `http`) | HTTP/HTTPS URL checks from external vantage point — verify URLs are blocked from public internet |
 | [`raid-monitor/`](raid-monitor/) | bash | `raid` | Generic RAID monitor — diff-based, supports 3ware/Areca/Adaptec/mdraid/MegaRAID |
 | [`rhn/`](rhn/) | sh | `rhn` | Config drift from Red Hat Satellite 5.x / Spacewalk 2.x |
 
