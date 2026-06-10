@@ -1,0 +1,325 @@
+#!/bin/bash
+##
+## Copyright (c) 2006, 2007, 2008, 2009, 2010, 2011, 2014 Thomas Eckert,
+##	<thomas.eckert@it-eckert.de>
+##	http://www.it-eckert.com/software/raid-monitor
+##
+## License
+##	Copying and distribution of this package (raid-monitor for Xymon), with or
+##	without modification, are permitted in any medium without royalty provided the
+##	copyright notice and this notice are preserved. This package is offered as-is,
+##	without any warranty.
+##
+## raid-monitor for Xymon
+## generic RAID-Status-Checker
+##
+
+
+######################################################################
+## config:
+
+MY_VERSION="0.9.8"
+MY_NAME="raid-monitor"
+
+MOD_PATH="${0%/*}/raid.d/"	## path to raid-modules
+
+## aid debugging:
+[ -n "$BBTMP" ] || BBTMP="/tmp"
+TMPFILE="${BBTMP}/tmp.raid-monitor.txt"
+BBCOLUMN="raid"
+
+REFFILE="${BBHOME}/ext/raid-monitor-ref.txt"
+FIST_LINE=""				## used to store 1st line of status-msg
+
+## raid-card that should be monitored: (no mixed use possible yet)
+#MY_RAID="3ware";	## [ 3ware | areca ]
+
+## SILENT operation: 0=normal logging; 1=silent: (set by "-s")
+SILENT=1
+
+## avoid path-troubles:
+#DIFF="diff -u"
+DIFF="diff -Nurp"
+
+## no modifications should be necessary below this line!
+
+######################################################################
+## functions:
+
+_usage() {
+	echo "$MY_NAME v$MY_VERSION, generic RAID-checker for Xymon"
+	echo "Copyright (c) 2006-2014 Thomas Eckert, http://www.it-eckert.com/"
+	echo
+	echo "usage: $MY_NAME [ -c conffile ] [ -s ] [ -m mod_dir ] [ -r | -d | -h ]"
+	echo "  -c conffile   specify config-file, see documentation for default"
+	echo "  -m mod_dir    directory with modules (default \"$MOD_PATH\")"
+	echo "  -r            generate new reference-file (${REFFILE})"
+	echo "  -s            silent operation, only log errors"
+	echo "  -d            debug-mode, print everything to stdout, send nothing to Xymon-server"
+	echo "  -h            this help-message"
+} ## of _usage()
+
+_param_parse() {
+	local opt
+
+	while getopts c:rsdh opt "$@"
+	do
+		case $opt in
+			d)	## debug
+				MODE="debug"
+			;;
+			c)	## config-file
+				RAID_MONITOR_CFG="$OPTARG"
+			;;
+			m)	## path to raid.d/
+				MOD_PATH="$OPTARG"
+			;;
+			r)	## create new reference-file
+				MODE="ref"
+			;;
+			s)	## silent operation
+				SILENT=1
+			;;
+			h)	## help/usage
+				_usage
+				exit 0
+			;;
+		esac
+	done
+
+	## fear-checks:
+	if [ "x$MODE" = "x" ]; then
+		_log "no option given, operating in standard-mode"
+	fi
+	if [ ! -d "$MOD_PATH" ]; then
+		_error "module-path \"$MOD_PATH\" does not exist."
+	fi
+
+} ## of _param_parse()
+
+## print footer for status:
+__footer() {
+	echo "----"
+	echo "${MY_NAME} v${MY_VERSION} | Copyright (c) 2006-2014 Thomas Eckert, http://www.it-eckert.com/"
+} ## of __footer()
+
+## print log-message
+_log() {
+	if [ "$SILENT" != "1" ]; then
+		echo "$(date +"%F %T") $@"
+	fi
+} ## of _log()
+
+## print warning-message
+_warn() {
+	echo "WARN: $(date +"%F %T") $@"
+} ## of _warn()
+
+## print error-message and exit
+_error() {
+	echo "$(date +"%F %T") $@"
+	exit 1
+} ## of _error()
+
+## loop over an array given as 1st parameter
+__loop() {
+	local cmd="$1"
+	shift
+	local opt
+
+	## ugly: use global $MODE here:
+	#[ "$MODE" = "debug" ] && echo "debug: $FUNCNAME(): cmd=$cmd; opts=\"$@\""
+
+	for opt in "$@"
+	do
+		if [ "$mode" = "ref" ]; then
+				echo ">>> $cmd $opt" >> $REFFILE 2>&1
+				$cmd $opt >> $REFFILE 2>&1
+				echo >> $REFFILE 2>&1
+		elif [ "$mode" = "debug" ]; then
+				echo ">>> $cmd $opt" 2>&1 | tee -a $TMPFILE
+				$cmd $opt 2>&1 | tee -a $TMPFILE
+				echo 2>&1 | tee -a $TMPFILE
+		else
+				echo ">>> $cmd $opt" >> $TMPFILE 2>&1
+				$cmd $opt >> $TMPFILE 2>&1
+				echo >> $TMPFILE 2>&1
+		fi
+	done
+} ## of __loop()
+
+## execute a single command given as parameter (incl. options)
+__single_cmd() {
+	local cmd="$@"
+
+	if [ "$mode" = "ref" ]; then
+			echo ">>> $cmd" >> $REFFILE 2>&1
+			$cmd >> $REFFILE 2>&1
+			echo >> $REFFILE 2>&1
+	elif [ "$mode" = "debug" ]; then
+			echo ">>> $cmd $opt" 2>&1 | tee -a $TMPFILE
+			$cmd 2>&1 | tee -a $TMPFILE
+			echo 2>&1 | tee -a $TMPFILE
+	else
+			echo ">>> $cmd $opt" >> $TMPFILE 2>&1
+			$cmd >> $TMPFILE 2>&1
+			echo >> $TMPFILE 2>&1
+	fi
+} ## of __single_cmd()
+
+_filedate() {
+	local my_file="$1"
+
+	echo ">>> Details of ${my_file}:"
+	ls -al $my_file
+} ## of _filedate()
+
+## diff $TMPFILE and $REFFILE
+_diff() {
+	local mode="$1"
+
+	if [ "$mode" = "ref" ]; then
+		:
+	elif [ "$mode" = "debug" ]; then
+		$DIFF $REFFILE $TMPFILE >> ${TMPFILE}.diff
+		return $?
+	else
+		echo ">>> \"$DIFF $REFFILE $TMPFILE\"" >> ${TMPFILE}.diff
+		$DIFF $REFFILE $TMPFILE >> ${TMPFILE}.diff
+		return $?
+	fi
+} ## of _diff()
+
+
+######################################################################
+## MAIN
+######################################################################
+
+## parse cmdline:
+_param_parse $@
+
+## check availablity of needed pgms:
+[ -x $CAT ] || _error "\$CAT does not point to executable pgm"
+[ -x $SED ] || _error "\$SED does not point to executable pgm"
+[ -x $TAIL ] || _error "\$TAIL does not point to executable pgm"
+
+## read external config: search-path: beside monitor-script -> BBHOME/etc
+if [ "x$RAID_MONITOR_CFG" = "x" ] ; then
+        if [  -r "${0%/*}/${MY_NAME}.cfg" ] ; then
+                RAID_MONITOR_CFG="${0%/*}/${MY_NAME}.cfg"
+        else
+                RAID_MONITOR_CFG="$BBHOME/etc/${MY_NAME}.cfg"
+        fi
+fi
+
+## read config if it exists:
+if [ -r "$RAID_MONITOR_CFG" ]; then
+        . $RAID_MONITOR_CFG
+else
+	_error "ERROR: config-file \"$RAID_MONITOR_CFG\" not readable"
+fi
+
+_log "MOD_PATH=$MOD_PATH"
+## source needed raid-modules:
+for raid_mod in $MY_RAID
+do
+	if [ -r "$MOD_PATH/$raid_mod.raid" ]; then
+		. $MOD_PATH/$raid_mod.raid
+		if [ $? -eq 0 ]; then
+			_log "sourced \"$MOD_PATH/$raid_mod.raid\"."
+		fi
+			
+	else
+		_error "ERROR: \"$MOD_PATH/$raid_mod.raid\" not found"
+	fi
+done
+
+## re-read config to override *.raid-sepcific configurations:
+. $RAID_MONITOR_CFG
+
+## default-color:
+COLOR="red"
+
+## cleanup TMPFILEs:
+> ${TMPFILE}
+> ${TMPFILE}.diff
+
+## empty ref-file if needed:
+if [ "$MODE" = "ref" ]; then
+	> ${REFFILE}
+	TMPFILE=$REFFILE
+fi
+
+## execute the selected raid-modules: (this create the file we diff
+## against the refercence-file created with "-r")
+for raid_mon in $MY_RAID
+do
+	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" >> $TMPFILE
+	echo ">>> module \"$raid_mon\":" >> $TMPFILE
+	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" >> $TMPFILE
+	_${raid_mon} "$MODE"
+	if [ $? -ne 0 ]; then
+		_warn "\"_${raid_mon}\" exited with rc=$?"
+	fi
+done
+
+## diff the data:
+_diff "$MODE"
+rc=$?
+if [ $rc -eq 0 ]; then
+	## no diffs, so everything is fine:
+	COLOR="green"
+	FIRST_LINE="$MY_RAID RAID(s) OK"
+else
+	## we have diffs => stay on BAD red color
+	FIRST_LINE="1st diff: $($TAIL -n +4 ${TMPFILE}.diff | $SED -n -e '/^+/{p;q;}')"
+fi
+
+
+## only send data in normal mode:
+if [ "$MODE" = "debug" ]; then
+	echo "debug-mode: send no data to server; files=$TMPFILE, $REFFILE"
+	echo "the bb-line would be:"
+	$CAT <<-EOM
+	\$BB \$BBDISP "status \${MACHINE}.${BBCOLUMN} $COLOR $(date) - $MY_RAID RAID(s)
+	${FIRST_LINE}
+
+	$($CAT ${TMPFILE}.diff)
+
+	$($CAT $TMPFILE)
+
+	$(_filedate $REFFILE)
+
+	$(__footer)
+	"
+EOM
+	exit 0
+fi
+
+
+## in "ref"-mode we only create the file:
+if [ "$MODE" = "ref" ]; then
+	echo "ref-mode: send no data to server; generated \"$REFFILE\""
+	exit 0
+fi
+
+
+## send the data to the server:
+$BB $BBDISP "status ${MACHINE}.${BBCOLUMN} $COLOR $(date) - $MY_RAID RAID(s)
+${FIRST_LINE}
+
+$($CAT ${TMPFILE}.diff)
+
+$($CAT $TMPFILE)
+
+$(_filedate $REFFILE)
+
+$(__footer)
+"
+
+
+#rm $TMPFILE
+#rm ${TMPFILE}.diff
+
+
+## vim:ts=4:sw=4

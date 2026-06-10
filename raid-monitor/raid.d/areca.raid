@@ -1,0 +1,60 @@
+##
+## (c) 2006-2010 Thomas Eckert <thomas.eckert@it-eckert.de>, http://www.it-eckert.de/
+##
+## raid-monitor for Xymon module for:
+##	Areca-based raid-cards
+##
+## Requirements:
+##	- areca-cli-tool; download from ftp://ftp.areca.com.tw/RaidCards/AP_Drivers/
+##    (adjust ARECA_CLI to fit your naming and path)
+##
+## Notes:
+##	- areca_cli does not need root-privileges => no sudo needed :)
+##
+
+######################################################################
+## config:
+
+## Areca:
+ARECA_CLI="/usr/sbin/areca-cli"
+declare -a ARECA_OPTS
+## this opts tested with versions 1.5_p50930, 1.82, 1.83_81103
+ARECA_OPTS=("hw info"
+	"sys info"
+	"rsf info"
+	"vsf info"
+	"disk info"
+	"net info"
+	"event info"
+)
+## notes on opts:
+##	- "hw info": reports temperature of the HDDs: should we parse them?
+##	- "sys info": firmware of controller and stuff like that
+##	- "rsf info": raid set info
+##	- "vsf info": volume set info
+##	- "net info": info on network config
+##	- "event info": eventlog of controller
+
+## no modifications should be necessary below this line!
+
+######################################################################
+## functions:
+
+
+## Areca: using "areca-cli" (original name: "cli32" and "cli64" on linux)
+## Note: if you do not want the array-stuff just eliminate __loop().
+_areca() {
+	__loop "$ARECA_CLI" "${ARECA_OPTS[@]}"
+	__single_cmd echo ">>> areca-CLI-version:"
+	__single_cmd "_areca_cliversion"
+} ## of _areca()
+
+
+_areca_cliversion() {
+	## extracts the version of the CLI; $HEAD + $TAIL used from
+	## Xymon-environment:
+	$ARECA_CLI main | $HEAD -n 2 | $TAIL -n 1
+} ## of _areca_cliversion()
+
+
+## vim:ts=4:sw=4

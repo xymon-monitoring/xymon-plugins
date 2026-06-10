@@ -1,0 +1,52 @@
+##
+## (c) 2006-2014 Thomas Eckert <thomas.eckert@it-eckert.de>, http://wwww.it-eckert.com
+## of course adjust the above (c)-line
+##
+## raid-monitor for Xymon module for:
+##	<sample>-based raid-cards
+##
+## Requirements:
+##	- list required tools, e.g. raid-cli, here
+##	- probable awk, perl, python, ... is used?
+##
+## Notes:
+## 	- specific notes, e.g. sample /etc/sudoers-line
+##
+
+######################################################################
+## config:
+
+## sample:
+SAMPLE_CLI="echo"
+declare -a SAMPLE_OPTS
+## options for SAMPLE_CLI (in this example 
+SAMPLE_OPTS=("This is an example raid-module"
+	"for raid-monitor for Xymon."
+	"It just echoes \$SAMPLE_CLI the text in $SAMPLE_OPTS."
+)
+
+
+######################################################################
+## functions:
+
+## sample: an example "sample.raid" module for raid-monitor
+##	in this case the following would be executed via __loop():
+##		echo "This is an"
+##		echo "example raid-module"
+##		...
+##	and the result would be written to the reference-file or diffed (depending
+##	on the mode of operation).
+_00sample() {
+	## example for using __loop():
+	__loop "$SAMPLE_CLI" "${SAMPLE_OPTS[@]}" >> $REFFILE 2>&1
+
+	__single_cmd "_00sample_helper"
+
+} ## of _sample()
+
+_00sample_helper() {
+	echo "This is the example helper-function $FUNCNAME():"
+	echo "Just noop-example ;)"
+} ## of _00sample_helper()
+
+## vim:ts=4:sw=4

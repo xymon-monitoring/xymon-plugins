@@ -1,0 +1,88 @@
+##
+## (c) 2010-2014 Thomas Eckert <thomas.eckert@it-eckert.de>, http://wwww.it-eckert.com
+##
+## raid-monitor for Xymon module for:
+##	Adaptec Unified SAS/SATA RAID-controllers
+##
+## Requirements:
+##	- arcconf (comes with Adaptec Storage Manager (ASM));
+##	  tested versions: "Version 6.50 (B18579)"
+##	  (adjust "ARCCONF_CLI" to fit your setup)
+##
+## Notes:
+## 	- add something like the following to you /etc/sudoers:
+##		xymon  ALL=(ALL)       NOPASSWD: /usr/local/bin/arcconf
+##	- make sure that /var/log/UcliEvt.log is WRITABLE for xymon
+###	  (hobbit) user (owership &| permissions at your choice):
+##		chmod g+w /var/log/UcliEvt.log
+##
+
+######################################################################
+## config:
+
+## sample:
+ARCCONF_CLI="/usr/bin/sudo /usr/local/bin/arcconf"
+declare -a SAMPLE_OPTS
+## options for SAMPLE_CLI (in this example 
+ARCCONF_OPTS=("GETCONFIG 1 LD"
+	"GETCONFIG 1 PD"
+	"GETSTATUS 1"
+	"GETVERSION"
+)
+## what these commands do:
+##	GETCONFIG: LD=Logical Drives / PD=Physical Drives
+##	GETSTATUS: current commands executed by controller
+##		(most likely not good to use for monitoring)
+##	GETVERSION: Firmware / Staged Firmware / Bios / ... version on controller
+##		=> very helpful to see if new firmware was flashed but
+##		   not yet loaded!
+
+
+######################################################################
+## functions:
+
+_aacraid() {
+	__single_cmd "_aacraid_AD_helper"
+
+	__loop "$ARCCONF_CLI" "${ARCCONF_OPTS[@]}"
+
+	__single_cmd "_aacraid_eventlogs"
+
+	__single_cmd "_aacraid_cliversion"
+
+} ## of _aacraid()
+
+_aacraid_AD_helper() {
+	echo "(\"Temperature\" removed from output!)"
+	echo "$ARCCONF_CLI GETCONFIG 1 AD"
+	$ARCCONF_CLI GETCONFIG 1 AD | $GREP -v "Temperature"
+} ## of _aacraid_AD_helper()
+
+_aacraid_cliversion() {
+	echo ">>> arcconf-CLI-version:"
+	$ARCCONF_CLI | $HEAD -n5
+} ## of _aacraid_cliversion()
+
+## this one is needed to strip-off the timestamp of the GETLOG-result and to
+## beautify (read: make-up for the web-browser) the output:
+_aacraid_eventlogs() {
+	local type
+
+	echo ">>> event-logs of controller 1:"
+	for type in EVENT DEAD DEVICE
+	do
+		## TODO: as we do not use "tabular" but report in XML we have
+		## some difficulties w/ formatting => "<pre>"-$SED-hack
+		## Probably writing a complete parser (for each log-type?) would
+		## be best.
+		echo ">>> log-type: $type:<pre>"
+		$ARCCONF_CLI GETLOGS 1 $type \
+			| $GREP -v "ControllerLog\|eventlog\|Controllers found:\|^$" \
+			| $TAIL -n11 | $SED -e 's@^[[:space:]]*<event Date="[0-9]*"@@' \
+			| $SED -e "s@[[:space:]]*@@" \
+			| $SED -e "s@[\<\>]@@g"
+		echo "</pre>"
+	done
+} ## of _aacraid_eventlogs()
+
+## vim:ts=4:sw=4

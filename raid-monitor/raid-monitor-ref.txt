@@ -1,0 +1,3 @@
+### REPLACE THIS FILE with a copy of the RAID tmp FILE HERE, ala: 
+
+cp /dev/shm/tmp.raid-monitor.txt /usr/share/xymon-client/ext/raid-monitor-ref.txt 

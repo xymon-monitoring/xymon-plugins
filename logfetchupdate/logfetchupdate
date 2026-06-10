@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# logfetchupdate
+# 
+# Connect to one/any of the xymon servers and attempt to download an updated copy 
+# of our logfetch config file.
+# 
+# Server must support this syntax ... Terabithia RPMS > 4.3.18
+# 
+
+test -z "$XYMONTMP" && echo "ERROR: xymon environment not present" >&2 && exit -1
+
+# Set these in sysconfig or xymonclient.cfg
+test "$STATUSMODE" = "yes" -o "$SUBMITMODE" = "yes" || exit 0
+
+# Allow an override of the "standard" XYMSRV entry
+test -n "$XYMCONFIGSRV" && XYMSRV="$XYMCONFIGSRV"
+
+LOGFETCHCFG=$XYMONTMP/logfetch.$MACHINEDOTS.cfg
+export LOGFETCHCFG
+
+
+rm -f "$LOGFETCHCFG.$$.tmp"
+
+$XYMON $XYMSRV "clientconfig $MACHINE.$SERVEROSTYPE $CONFIGCLASS" > "$LOGFETCHCFG.$$.tmp"
+RES="$?"
+
+if test -f "$LOGFETCHCFG.$$.tmp"
+then
+	if test -s "$LOGFETCHCFG.$$.tmp"
+	then
+		mv "$LOGFETCHCFG.$$.tmp" "$LOGFETCHCFG"
+		exit 0
+	else
+		rm -f "$LOGFETCHCFG.$$.tmp"
+		exit $RES
+	fi
+fi

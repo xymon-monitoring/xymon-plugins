@@ -1,0 +1,65 @@
+##
+## (c) 2006-2014 Thomas Eckert <thomas.eckert@it-eckert.de>, http://wwww.it-eckert.com
+##
+## raid-monitor for Xymon module for:
+##	3ware-based raid-cards
+##
+## Requirements:
+##	- 3ware/AMCC/LSI CLI-tool, download from http://www.3ware.com/
+##	  (probably path to "tw_cli" needs to be adjusted: TW_CLI)
+##
+## Notes:
+## 	- tw_cli needs root-previleges to run, thus add the xymon-user
+##	  to /etc/sudoers
+##	  Sample/etc/sudoers-line for tw_cli:
+##		xymon  ALL=(ALL)       NOPASSWD: /sbin/tw_cli
+##
+
+######################################################################
+## config:
+
+## 3ware:
+TW_CLI="/usr/bin/sudo /sbin/tw_cli"
+declare -a TW_OPTS
+## this opts tested with tw_cli v9.3.0.4, v9.5.0.1:
+## 3ware/AMCC 9650SX (3 S-ATA disks, one raid-set):
+TW_OPTS=("alarms c0"
+	"/c0/p0 show capacity firmware identify model ncq serial status lspeed"
+	"/c0/p1 show capacity firmware identify model ncq serial status lspeed"
+	"/c0/p2 show capacity firmware identify model ncq serial status lspeed"
+	"/c0 show all"
+	"/c0/u0 show all"
+	"show ver"
+)
+## tw_cli-9.5.2 has a new syntax:
+#TW_OPTS=("/c0 show alarms"
+#	"/c0 show events"
+#	"/c0/p0 show capacity firmware identify model ncq serial status lspeed"
+#	"/c0/p1 show capacity firmware identify model ncq serial status lspeed"
+#	"/c0 show all"
+#	"/c0/u0 show all"
+#	"show ver"
+#)
+
+## for 3ware 7500 (2 EIDE-disks, one raid-set):
+#TW_OPTS=("alarms c0"
+#	"/c0/p0 show capacity firmware model serial status"
+#	"/c0/p1 show capacity firmware model serial status"
+#	"/c0 show all"
+#	"/c0/u0 show all"
+#	"show ver"
+#)
+
+
+######################################################################
+## functions:
+
+## 3ware: using tw_cli
+## Note: if you do not want the array-stuff just eliminate __loop() and
+##	execute every command manually, e.g. with __single_cmd() (not recommended!).
+_3ware() {
+	__loop "$TW_CLI" "${TW_OPTS[@]}"
+} ## of _3ware()
+
+
+## vim:ts=4:sw=4

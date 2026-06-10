@@ -1,0 +1,28 @@
+##
+## raid-monitor for Xymon module for:
+##	Linux software-raid (MD-driver)
+##
+## Requirements:
+##	- linux mdraid and accessible /proc/mdraid for xymon user
+##
+## Notes:
+## 	n/a
+##
+
+######################################################################
+## config:
+
+## no options, just uses the complete "/proc/mdstat"
+
+
+######################################################################
+## functions:
+
+function _linux_mdraid() {
+	local cmd="$CAT /proc/mdstat"
+	
+	__single_cmd echo "RAID fuer Softis"
+	__single_cmd "${cmd}"
+} ## of _linux_mdraid() 
+
+## vim:ts=4:sw=4

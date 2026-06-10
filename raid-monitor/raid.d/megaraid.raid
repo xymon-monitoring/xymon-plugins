@@ -1,0 +1,63 @@
+##
+## (c) 2011-2014 Thomas Eckert <thomas.eckert@it-eckert.de>, http://wwww.it-eckert.com
+##
+## "raid-monitor for Xymon"-module for:
+##      LSI MegaRAID-based raid-cards
+##
+## Requirements:
+##      - MegaCli, available from http://www.lsi.com/ -> Storage -> Storage
+##              Products -> Internal RAID -> SATA+SAS -> MegaRAID
+##        tested version(s):
+##              MegaCLI SAS RAID Management Tool  Ver 8.00.40 Oct 12, 2010
+##      - $GREP + $EGREP
+##      - tested with:
+##              - LSI MegaRAID SAS 9260-4i
+##              - LSI MegaRAID SAS 9266-8i
+##
+## Notes:
+##      - see comment for _megaraid_helper()
+##
+
+######################################################################
+## config:
+
+## sample:
+MEGARAID_CLI="/usr/bin/sudo /usr/lib/hobbit/client/ext/raid.d/MegaCli64"
+declare -a MEGARAID_OPTS
+## options for MEGARAID_CLI
+MEGARAID_OPTS=("-v"
+)
+
+
+######################################################################
+## functions:
+
+_megaraid() {
+        __loop "$MEGARAID_CLI" "${MEGARAID_OPTS[@]} -nolog"
+        __single_cmd _megaraid_helper
+} ## of _megaraid()
+
+## Things that are filtered:
+## "-LdPdInfo -aALL" includes drive-temperature in the form:
+##      Drive Temperature :29C (84.20 F)
+## "-LdPdInfo -aALL" include running background-processes, e.g.
+##      "Consistency check"
+##
+## General note:
+## Why not use "-LdPdInfo" + "-pdInfo"?
+## Unfortunately "-LDInfo -Lall -aALL" does not include the slot-number
+## of the member-disks and "PDInfo -aLL" does not include the LD the PD
+## is member of.
+_megaraid_helper() {
+        echo ">>> $MEGARAID_CLI -LdPdInfo -aALL -nolog (w/o '^Drive Temperature :' + consistency-checks):"
+        $MEGARAID_CLI -LdPdInfo -aALL -nolog \
+                | $GREP -v "^Drive Temperature :" \
+                | $EGREP -v "^Ongoing Progresses:|^  Check Consistency"
+
+        echo ">>> $MEGARAID_CLI -AdpAllinfo -aALL -nolog (w/o '^Current Time' and '^ROC temperature'):"
+        $MEGARAID_CLI -AdpAllinfo -aALL -nolog \
+                | $GREP -v "^Current Time" \
+                | $GREP -v "^ROC temperature"
+}
+
+## vim:ts=4:sw=4
