@@ -130,14 +130,6 @@
 #
 TEST="hardware"
 
-#
-# iDRAC hostname for DNS verification (optional).
-# Set to the DNS name of this server's iDRAC management interface.
-# The script resolves this name and compares the result against the IP that
-# omreport reports for the iDRAC NIC.  A mismatch or failed lookup turns the
-# column red.  Leave blank to skip the check.
-#
-IDRAC_HOSTNAME=""
 
 # 
 # Name of our script for debugging purposes
@@ -256,25 +248,36 @@ just don't support this component yet."
 done
 
 #
-# iDRAC DNS check
+# iDRAC DNS check — zero config.
+# Reads iDRAC IP, DNS name, and domain from omreport chassis remoteaccess.
+# Constructs the FQDN, resolves it, and compares against the reported IP.
 #
 IDRAC_DNS_MSG=""
-if [ -n "$IDRAC_HOSTNAME" ]; then
-    IDRAC_IP=$(omreport chassis remoteaccess config=network 2>/dev/null | \
-        awk '/^IP Address[[:space:]]*:/ && !/Source/ { print $NF; exit }')
-    IDRAC_DNS_IP=$(getent hosts "$IDRAC_HOSTNAME" 2>/dev/null | awk '{ print $1; exit }')
+REMOTEACCESS=$(omreport chassis remoteaccess config=network 2>/dev/null)
+IDRAC_IP=$(echo "$REMOTEACCESS"   | awk -F'[[:space:]]*:[[:space:]]*' '/^IP Address[[:space:]]*:/ && !/Source/ { print $2; exit }')
+IDRAC_NAME=$(echo "$REMOTEACCESS" | awk -F'[[:space:]]*:[[:space:]]*' '/DNS iDRAC Name/            { print $2; exit }')
+IDRAC_DOM=$(echo "$REMOTEACCESS"  | awk -F'[[:space:]]*:[[:space:]]*' '/DNS Domain Name/           { print $2; exit }')
+
+if [ -n "$IDRAC_NAME" ]; then
+    if [ -n "$IDRAC_DOM" ]; then
+        IDRAC_FQDN="${IDRAC_NAME}.${IDRAC_DOM}"
+    else
+        IDRAC_FQDN="$IDRAC_NAME"
+    fi
+
+    IDRAC_DNS_IP=$(getent hosts "$IDRAC_FQDN" 2>/dev/null | awk '{ print $1; exit }')
 
     if [ -z "$IDRAC_IP" ]; then
-        IDRAC_DNS_MSG="iDRAC DNS: could not read iDRAC IP from omreport chassis remoteaccess"
+        IDRAC_DNS_MSG="iDRAC DNS: could not parse iDRAC IP from omreport chassis remoteaccess"
         COLOR="red"
     elif [ -z "$IDRAC_DNS_IP" ]; then
-        IDRAC_DNS_MSG="iDRAC DNS error: $IDRAC_HOSTNAME does not resolve in DNS"
+        IDRAC_DNS_MSG="iDRAC DNS error: $IDRAC_FQDN does not resolve (iDRAC NIC is $IDRAC_IP)"
         COLOR="red"
     elif [ "$IDRAC_IP" != "$IDRAC_DNS_IP" ]; then
-        IDRAC_DNS_MSG="iDRAC DNS mismatch: $IDRAC_HOSTNAME resolves to $IDRAC_DNS_IP but iDRAC NIC is $IDRAC_IP"
+        IDRAC_DNS_MSG="iDRAC DNS mismatch: $IDRAC_FQDN resolves to $IDRAC_DNS_IP but iDRAC NIC is $IDRAC_IP"
         COLOR="red"
     else
-        IDRAC_DNS_MSG="iDRAC DNS: $IDRAC_HOSTNAME resolves to $IDRAC_IP (ok)"
+        IDRAC_DNS_MSG="iDRAC DNS: $IDRAC_FQDN resolves to $IDRAC_IP (ok)"
     fi
 fi
 

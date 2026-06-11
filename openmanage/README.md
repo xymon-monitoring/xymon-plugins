@@ -6,7 +6,7 @@ Original script by Brian Smith-Sweeney. Version 0.57 (local patched).
 
 ## Changes in v0.57 (local patch)
 
-- Added iDRAC DNS check: set `IDRAC_HOSTNAME` in the script to the DNS name of the server's iDRAC management interface. The script resolves that name and compares the result against the IP reported by `omreport chassis remoteaccess`. A mismatch or failed DNS lookup turns the `hardware` column red.
+- Added zero-config iDRAC DNS check: reads iDRAC IP, DNS name, and domain directly from `omreport chassis remoteaccess config=network`, constructs the FQDN, resolves it via `getent hosts`, and compares against the reported IP. A mismatch or failed lookup turns the `hardware` column red. No configuration required.
 
 ## Changes in v0.56 (local patch over upstream v0.55)
 
@@ -39,18 +39,14 @@ Add to `$XYMONCLIENTHOME/etc/clientlaunch.cfg` or drop a file in `clientlaunch.d
 
 ## iDRAC DNS check
 
-Set `IDRAC_HOSTNAME` near the top of the script to the expected DNS name for this server's iDRAC:
+Runs automatically with no configuration. Each run the script:
 
-```bash
-IDRAC_HOSTNAME="idrac-web1.example.com"
-```
+1. Calls `omreport chassis remoteaccess config=network` and parses the iDRAC IP address, DNS name, and DNS domain name
+2. Constructs the iDRAC FQDN as `DNS iDRAC Name` + `.` + `DNS Domain Name`
+3. Resolves that FQDN via `getent hosts`
+4. Compares the resolved IP against the iDRAC NIC IP — if they differ, or if the name does not resolve, the column turns red
 
-Each run the script will:
-1. Read the iDRAC's actual IP from `omreport chassis remoteaccess config=network`
-2. Resolve `IDRAC_HOSTNAME` via `getent hosts`
-3. Compare the two — if they differ or the name does not resolve, the column turns red and the mismatch is shown in the column body
-
-Leave `IDRAC_HOSTNAME=""` to skip the check.
+The check is skipped silently if `omreport` does not report a DNS iDRAC Name (e.g. iDRAC not configured with a DNS name).
 
 ## How it works
 
