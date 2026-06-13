@@ -1,6 +1,6 @@
 # arista
 
-Server-side Xymon monitor for Arista EOS switches. SSHs into each configured switch in user EXEC mode and reports 6 status columns per switch.
+Server-side Xymon monitor for Arista EOS switches. SSHs into each configured switch in user EXEC mode and reports 4 status columns per switch.
 
 ## Columns produced
 
@@ -8,10 +8,8 @@ Server-side Xymon monitor for Arista EOS switches. SSHs into each configured swi
 |---|---|
 | `cpu` | Load average + top EOS process CPU usage |
 | `memory` | Physical memory used % with used/free MB |
-| `interfaces` | Per-port status, new flaps since last poll, error/CRC/drop counts; recent link-state log events at privilege 15 |
 | `hardware` | PSU status, fan status, temperatures — trusts Arista's own Ok/NotOk indicators |
-| `net` | Current uplink rate (Mbps) + 95th-percentile vs bandwidth commitment; sends `net.rrd` data to Xymon for graphing |
-| `stp` | Spanning-tree port states, err-disabled detection, BPDU guard summary; recent STP log events at privilege 15 |
+| `net` | **Bandwidth**: uplink rate (Mbps) + 95th-percentile vs commitment<br>**Interfaces**: per-port status, flaps, error/CRC/drop counts; link-state log events at privilege 15<br>**Spanning tree**: port states, err-disabled detection, BPDU guard summary; STP log events at privilege 15 |
 
 ## Requirements
 
@@ -72,11 +70,31 @@ HOST               = arista1.example.com
 XYMON_HOSTNAME     = arista1.example.com
 UPLINK_PORTS       = Ethernet49/1 Ethernet50/1
 COMMITMENT_MBPS    = 1000
+# Ports to graph individually (creates ifstat.<port>.rrd via [ifstat] stanza):
+# GRAPHED_PORTS      = Ethernet49/1 Ethernet50/1
+# Ports whose flaps don't count toward column color (errors still do):
+# FLAP_IGNORE_PORTS  = Ethernet43
+# Ports fully silenced from column color (flaps + errors both suppressed):
+# MUTED_PORTS        = Ethernet43
 ```
 
 `XYMON_HOSTNAME` must match the hostname as registered in Xymon's `hosts.cfg`.
 
 `UPLINK_PORTS` is a space-separated list of port names exactly as shown in `show interfaces` (e.g. `Ethernet49/1`). If omitted, the `net` column still sends green but shows no bandwidth data.
+
+`GRAPHED_PORTS` (optional) is a space-separated list of port names to graph individually in Xymon. Each creates an `ifstat.<portname>.rrd` file picked up automatically by the `[ifstat]` "Network Traffic" stanza in `/etc/xymon/graphs.cfg`. No `graphs.cfg` changes needed. Port names with `/` are mapped to `-` in the filename (e.g. `Ethernet49/1` → `ifstat.Ethernet49-1.rrd`).
+
+### Port alerting suppression
+
+| Key | Effect |
+|---|---|
+| `FLAP_WARN` / `FLAP_CRIT` | New flap count per 5-min cycle that triggers yellow/red (global, default 1/5) |
+| `FLAP_IGNORE_PORTS` | Space-separated ports whose flap count is excluded from column color. Errors on these ports still count. Port appears in the interface table annotated `[flap-ignored]`. |
+| `MUTED_PORTS` | Space-separated ports fully silenced — flaps **and** errors suppressed from column color. Port still appears in the table annotated `[MUTED]`; active issues are listed in the Flagged section for visibility. |
+
+Both `FLAP_IGNORE_PORTS` and `MUTED_PORTS` accept abbreviated EOS names (`Et43`) or long names (`Ethernet43`) interchangeably.
+
+Use `MUTED_PORTS` for devices with predictable power-cycle or sleep/wake behavior (e.g. a Mac mini that sleeps overnight) where you want the activity visible in the column body but don't want the column to go yellow or red.
 
 ## Scheduling via `tasks.cfg`
 
@@ -95,7 +113,9 @@ Or via cron:
 
 ## RRD graphing
 
-Bandwidth data is sent as a Xymon `data` message each poll cycle, which populates `net.rrd` with two DS fields: `in` (bits/sec) and `out` (bits/sec). To graph it, append the `[net]` stanza from `../graphs.cfg` to `/etc/xymon/graphs.cfg`.
+Uplink aggregate bandwidth is sent as a Xymon `data` message each poll cycle, populating `net.rrd` with DS fields `in`/`out` (bits/sec). Append the `[net]` stanza from `../graphs.cfg` to `/etc/xymon/graphs.cfg` to graph it.
+
+Per-port bandwidth for ports listed in `GRAPHED_PORTS` is sent as `ifstat.<portname>.rrd` with DS fields `bytesReceived`/`bytesSent` (bytes/sec), which the existing `[ifstat]` "Network Traffic" stanza in `/etc/xymon/graphs.cfg` picks up automatically — no `graphs.cfg` changes needed.
 
 ## Bandwidth 95th percentile
 

@@ -37,13 +37,15 @@ import os
 import re
 import socket
 import sqlite3
+import subprocess
 import sys
 import time
 
 import pexpect
 
-CONF_DIR = os.environ.get("ASA_MONITOR_CONF_DIR", "/etc/xymon/conf.d")
-DATA_DIR = os.environ.get("ASA_MONITOR_DATA_DIR", "/var/lib/xymon/asa-monitor")
+CONF_DIR      = os.environ.get("ASA_MONITOR_CONF_DIR", "/etc/xymon/conf.d")
+DATA_DIR      = os.environ.get("ASA_MONITOR_DATA_DIR", "/var/lib/xymon/asa-monitor")
+XYMON_RRD_DIR = os.environ.get("XYMON_RRD_DIR",        "/var/lib/xymon/rrd")
 
 SSH_OPTS = [
     "-o", "HostKeyAlgorithms=+ssh-rsa",  # ASA 9.14 only offers SHA-1 RSA host key
@@ -78,6 +80,9 @@ def find_configs(target=None):
             continue
         for section in cfg.sections():
             if not cget(cfg, section, "HOST") or not cget(cfg, section, "XYMON_HOSTNAME"):
+                continue
+            dt = cget(cfg, section, "DEVICE_TYPE")
+            if dt and dt.lower() != "asa":
                 continue
             name = section
             if target and name != target:
@@ -325,9 +330,10 @@ def worst_color(*colors):
 # Xymon send
 # ---------------------------------------------------------------------------
 
-def xymon_send_status(xymon_host, xymon_port, fqdn, column, color, body):
+def xymon_send_status(xymon_host, xymon_port, fqdn, column, color, body, headline=""):
     ts  = time.strftime("%a %b %d %H:%M:%S %Z %Y")
-    msg = f"status+600 {fqdn}.{column} {color} {ts}\n\n{body}\n"
+    sfx = (" " + headline) if headline else ""
+    msg = f"status+600 {fqdn}.{column} {color} {ts}{sfx}\n\n{body}\n"
     _xymon_tcp(xymon_host, xymon_port, msg)
     print(f"  [{color.upper():6}] {fqdn}.{column}")
 
@@ -346,6 +352,64 @@ def xymon_send_data(xymon_host, xymon_port, fqdn, column, ds_dict, rrd_file=None
     for ds, val in ds_dict.items():
         lines.append(f"DS:{ds}:GAUGE:600:0:U {int(val)}")
     _xymon_tcp(xymon_host, xymon_port, "\n".join(lines) + "\n")
+
+
+def port_to_rrd(name):
+    """Map a port/interface name to an ifstat.*.rrd stem for the [ifstat] graph stanza."""
+    return "ifstat." + re.sub(r'[/\s]+', '-', name)
+
+
+# ---------------------------------------------------------------------------
+# Direct rrdtool writes (bypass xymond_rrd write cache / missing handlers)
+# ---------------------------------------------------------------------------
+
+_STD_RRAS = [
+    "RRA:AVERAGE:0.5:1:576",
+    "RRA:AVERAGE:0.5:6:576",
+    "RRA:AVERAGE:0.5:24:576",
+    "RRA:AVERAGE:0.5:288:576",
+]
+_NET_RRD_SPEC    = ["--step", "300", "DS:in:GAUGE:600:0:U", "DS:out:GAUGE:600:0:U"] + _STD_RRAS
+_LA_RRD_SPEC     = ["--step", "300", "DS:la:GAUGE:600:U:U"] + _STD_RRAS
+_IFSTAT_RRD_SPEC = ["--step", "300",
+                    "DS:bytesReceived:GAUGE:600:0:U",
+                    "DS:bytesSent:GAUGE:600:0:U"] + _STD_RRAS
+
+
+def _rrd_write(host_dir, fname, spec, value_str):
+    path = os.path.join(host_dir, fname)
+    if not os.path.exists(path):
+        r = subprocess.run(["rrdtool", "create", path] + spec,
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"  rrdtool create {fname}: {r.stderr.strip()}", file=sys.stderr)
+            return
+    r = subprocess.run(["rrdtool", "update", path, f"N:{value_str}"],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        print(f"  rrdtool update {fname}: {r.stderr.strip()}", file=sys.stderr)
+
+
+def _rrd_update_net(fqdn, in_bps, out_bps):
+    host_dir = os.path.join(XYMON_RRD_DIR, fqdn)
+    os.makedirs(host_dir, exist_ok=True)
+    _rrd_write(host_dir, "net.rrd", _NET_RRD_SPEC, f"{int(in_bps)}:{int(out_bps)}")
+    print(f"  [RRD   ] net.rrd → {in_bps/1_000_000:.1f}/{out_bps/1_000_000:.1f} Mbps")
+
+
+def _rrd_update_cpu_la(fqdn, cpu_pct):
+    host_dir = os.path.join(XYMON_RRD_DIR, fqdn)
+    os.makedirs(host_dir, exist_ok=True)
+    _rrd_write(host_dir, "la.rrd", _LA_RRD_SPEC, str(int(cpu_pct * 100)))
+    print(f"  [RRD   ] la.rrd → {cpu_pct:.1f}%")
+
+
+def _rrd_update_ifstat(fqdn, port, in_bytes_sec, out_bytes_sec):
+    host_dir = os.path.join(XYMON_RRD_DIR, fqdn)
+    os.makedirs(host_dir, exist_ok=True)
+    fname = f"{port_to_rrd(port)}.rrd"
+    _rrd_write(host_dir, fname, _IFSTAT_RRD_SPEC,
+               f"{int(in_bytes_sec)}:{int(out_bytes_sec)}")
 
 
 def _xymon_tcp(host, port, msg):
@@ -379,11 +443,6 @@ def col_cpu(cpu_tuple, procs, uptime_str, cfg, section):
         for name, pct in procs:
             marker = "  <-- !" if pct >= 20 else ""
             body  += f"  {pct:5.1f}%  {name}{marker}\n"
-    # Embed load average line so TEST2RRD="cpu=la" in xymonserver.cfg causes
-    # xymond_rrd (status channel) to create la.rrd from this status message.
-    # Values are ASA CPU% expressed as load-average numbers; the [la] graph
-    # CDEF divides by 100, so storing 6.00 displays as 6.00 on the Y-axis.
-    body += f"\nload average: {m5:.2f}, {m1:.2f}, {s5:.2f}\n"
     return color, body
 
 
@@ -601,8 +660,6 @@ def poll(name, fqdn, cfg_path, cfg):
     # --- Send columns ---
     c, b = col_cpu(cpu_t, procs, uptime, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "cpu", c, b)
-    # la.rrd is created by xymond_rrd (status channel) parsing the "load average:"
-    # line embedded in the cpu message body — no separate data message needed.
 
     c, b = col_memory(mem_t, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "memory", c, b)
@@ -616,11 +673,21 @@ def poll(name, fqdn, cfg_path, cfg):
     c, b = col_net_combined(in_bps, out_bps, in_95, out_95, n_samp,
                             iface_data, cfg, section)
     xymon_send_status(xymon_host, xymon_port, fqdn, "net", c, b)
+
+    # --- Direct RRD updates (bypass xymond_rrd write cache / missing handlers) ---
+    if cpu_t:
+        # cpu_t is (s5, m1, m5); use m5 for the CPU% graph
+        _rrd_update_cpu_la(fqdn, cpu_t[2])
     if in_bps is not None:
-        # ASA reports bytes/sec; multiply by 8 so net.rrd stores bits/sec
-        # (consistent with arista_monitor which parses native bps values)
-        xymon_send_data(xymon_host, xymon_port, fqdn, "net",
-                        {"in": in_bps * 8, "out": out_bps * 8})
+        # ASA in_bps is bytes/sec; net.rrd uses bits/sec
+        _rrd_update_net(fqdn, in_bps * 8, out_bps * 8)
+
+    graphed = cget(cfg, section, "GRAPHED_PORTS", "").split()
+    for iface_name in graphed:
+        d = iface_data.get(iface_name)
+        if d:
+            # ASA in_bps is bytes/sec; ifstat.rrd uses bytes/sec — use directly
+            _rrd_update_ifstat(fqdn, iface_name, d["in_bps"], d["out_bps"])
 
     if not no_vpn:
         c, b = col_vpn(vpn_n, vpn_det, no_vpn)

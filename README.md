@@ -8,7 +8,7 @@ Provided on a best-effort basis. Tested on RHEL/CentOS/AlmaLinux 9.
 
 | Directory | Language | Xymon column | What it monitors |
 |---|---|---|---|
-| [`arista/`](arista/) | Python 3 | `cpu` `memory` `interfaces` `hardware` `net` `stp` | Arista EOS switch health — server-side SSH poller |
+| [`arista/`](arista/) | Python 3 | `cpu` `memory` `hardware` `net` | Arista EOS switch health — server-side SSH poller |
 | [`ciscoasa/`](ciscoasa/) | Python 3 | `cpu` `memory` `conn` `hardware` `net` `vpn` | Cisco ASA firewall health — server-side SSH poller |
 | [`dumpcheck/`](dumpcheck/) | Perl | `dumpcheck` | Backup file age and size regression |
 | [`freshfiles/`](freshfiles/) | Perl | `freshbackups` | File freshness — all files in a glob updated within time window |

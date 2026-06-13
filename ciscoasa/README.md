@@ -63,6 +63,8 @@ XYMON_HOSTNAME     = asa1.example.com
 OUTSIDE_IFACE      = outside
 MONITOR_IFACES     = outside inside
 COMMITMENT_MBPS    = 100
+# Interface nameifs to graph individually (creates ifstat.<nameif>.rrd):
+# GRAPHED_PORTS      = outside inside
 ```
 
 Add a new `[section]` block for each additional ASA. The section name is the firewall's short name used on the command line.
@@ -77,6 +79,7 @@ Add a new `[section]` block for each additional ASA. The section name is the fir
 | `MONITOR_IFACES` | Space-separated list of `nameif` names to check for errors |
 | `COMMITMENT_MBPS` | 95th-pct bandwidth alert threshold (yellow at 85%, red at 100%) |
 | `BW_WINDOW_HOURS` | Rolling window for 95th-pct calculation (default 24h = 288 samples) |
+| `GRAPHED_PORTS` | Space-separated list of `nameif` names to graph individually via the `[ifstat]` "Network Traffic" stanza; each creates `ifstat.<nameif>.rrd` (no `graphs.cfg` changes needed) |
 
 ## Running
 
