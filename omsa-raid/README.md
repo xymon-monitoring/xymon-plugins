@@ -60,3 +60,7 @@ The Xymon column name is `hardware`.
 ## Origin
 
 From [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext). Original v1.0–v2.2 by Ben Argyle (bda20@cam.ac.uk / ben@lspace.org), University of Cambridge. Public domain.
+
+## License
+
+Public domain. Original by Ben Argyle (bda20@cam.ac.uk), University of Cambridge.

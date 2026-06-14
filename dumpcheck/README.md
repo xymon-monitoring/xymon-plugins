@@ -57,3 +57,7 @@ The Xymon column name is `dumpcheck`. Status is **green** (all files fresh and s
 ## Origin
 
 Derived from [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) and [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks), with local production customizations (96 h threshold, 4% tolerance, `;` pattern separator).
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.

@@ -52,3 +52,7 @@ The Xymon column name is `freshbackups` (derived from the script filename via `F
 ## Origin
 
 From [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks).
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.

@@ -135,3 +135,7 @@ Arista's cumulative link-status-change counter is read each poll cycle and compa
 ## Origin
 
 Custom plugin. Server-side script; runs on the monitoring host, not on the switch.
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.

@@ -131,3 +131,7 @@ A Xymon `data` message is sent each run so bandwidth is also stored in `net.rrd`
 ## Origin
 
 Custom script. Server-side poller; runs on the Xymon server, not on the monitored ASA.
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.

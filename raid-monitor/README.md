@@ -98,3 +98,7 @@ The Xymon column name is `raid` (set by `BBCOLUMN` in `raid-monitor.cfg`).
 ## Origin
 
 From [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks). Original by Thomas Eckert, [http://www.it-eckert.com/](http://www.it-eckert.com/). Copyright 2006–2014 Thomas Eckert. Free to copy and modify with attribution.
+
+## License
+
+Copyright (C) 2006–2014 Thomas Eckert. Copying and distribution, with or without modification, permitted in any medium without royalty provided the copyright notice and this notice are preserved. See script header for full terms.
