@@ -111,3 +111,7 @@ Or via `tasks.cfg`:
 ## Origin
 
 Custom plugin. Server-side script; runs on the external monitoring host, not on the monitored web server.
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.

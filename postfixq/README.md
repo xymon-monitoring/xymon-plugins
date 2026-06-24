@@ -59,3 +59,7 @@ The Xymon column name is `postfixq`. Status reports both active and deferred cou
 ## Origin
 
 Custom script from local plugins collection.
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.

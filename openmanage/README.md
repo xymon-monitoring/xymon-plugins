@@ -76,3 +76,7 @@ The Xymon column name is `hardware`.
 ## Origin
 
 From [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) (v0.55), patched locally to v0.57. Original by Brian Smith-Sweeney, University of California (2002). See script header for full license.
+
+## License
+
+Copyright (C) 2002 Regents of the University of California. Free for educational, research, and non-profit use; commercial use requires UC permission. See script header for full terms.

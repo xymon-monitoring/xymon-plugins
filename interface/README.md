@@ -65,3 +65,7 @@ Bond interfaces are checked via `/proc/net/bonding/<iface>` for MII status.
 ## Origin
 
 From [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks), originally by netdar (2013).
+
+## License
+
+No license specified by the original author (netdar, 2013). Use at your own discretion.

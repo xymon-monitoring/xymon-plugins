@@ -47,3 +47,7 @@ Add to `$XYMONCLIENTHOME/etc/clientlaunch.cfg` or drop a file in `clientlaunch.d
 ## Origin
 
 Custom script; requires Terabithia Xymon server patches. Not available in upstream Xymon.
+
+## License
+
+Copyright (C) 2026 spiderr. GNU General Public License v2 or later — see <https://www.gnu.org/licenses/>.
