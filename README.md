@@ -70,13 +70,13 @@ original work; the original author's upstream for third-party code).
 | [`ciscoasa/`](ciscoasa/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`dumpcheck/`](dumpcheck/) | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
 | [`freshfiles/`](freshfiles/) | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`interface/`](interface/) | none (unmaintained upstream) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) (via [Dafert blog](https://blog.dafert.org/)) | netdar (2013) | ❌ none | ⚠️ no upstream license |
+| [`interface/`](interface/) | **this repo** (upstream [blog](https://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) **down**) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | netdar (2013) | ❌ none | ⚠️ no upstream license |
 | [`logfetchupdate/`](logfetchupdate/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`omsa-raid/`](omsa-raid/) | Ben Argyle (U. Cambridge) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Ben Argyle, U. Cambridge | Public domain | ✅ |
-| [`openmanage/`](openmanage/) | UC / Brian Smith-Sweeney | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
+| [`omsa-raid/`](omsa-raid/) | no repo — orig. via Xymon list ([2009](https://lists.xymon.com/xymon/2009-March/023783.html), [2011](https://lists.xymon.com/xymon/2011-September/032429.html)) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Ben Argyle, U. Cambridge | Public domain | ✅ |
+| [`openmanage/`](openmanage/) | no repo — orig. via [hobbit list (2008)](https://lists.xymon.com/archive/2008-November/022358.html) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
 | [`postfixq/`](postfixq/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`raid-monitor/`](raid-monitor/) | [it-eckert.com](http://www.it-eckert.com/software/raid-monitor) | [it-eckert.com](http://www.it-eckert.com/software/raid-monitor) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
-| [`remotehttp/`](remotehttp/) | unknown (TBD) | unknown | unstated | ❌ none | ❌ missing origin + license |
+| [`raid-monitor/`](raid-monitor/) | **this repo** (upstream it-eckert.com **down**, NXDOMAIN) | [Wayback (2017)](http://web.archive.org/web/20170515074814/http://www.it-eckert.com:80/software/raid-monitor/) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
+| [`remotehttp/`](remotehttp/) | no repo found — likely original (**this repo**) | unknown | unstated | ❌ none | ❌ license TBD |
 | [`rhn/`](rhn/) | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
 
 **Legend:** ✅ complete · ⚠️ minor gap · ❌ real gap · **this repo** =
