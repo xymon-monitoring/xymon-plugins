@@ -52,32 +52,33 @@ All plugins expect the standard Xymon client environment sourced from `xymonclie
 
 ## Licensing & provenance
 
-This repository is the **canonical maintenance source** for the plugins that
-originate here — the GPL-2+ scripts authored by spiderr (marked *Original work*
-below). For plugins authored by third parties, this repo redistributes and
-patches a copy under the original license; the **authoritative source stays with
-the original author**, and their license governs redistribution. The *Origin*
-column records where a plugin's code first came from (historical source), not
-who maintains it now.
+No third-party upstream currently maintains a public repository for any of
+these plugins (the original sites are dead or were only mailing-list / blog
+posts). This repository is therefore the **source of record for all of them**.
+Original authors and licenses are preserved and credited per row; for
+third-party code the original license still governs redistribution.
 
-*Official source* = the authoritative, maintained home (**this repo** for
-original work; the original author's upstream for third-party code).
-*Origin* = where the code first came from historically.
+- *Side* — `client` (runs on the monitored host, `client/ext/`) or `server`
+  (runs on the Xymon server, `server/ext/`).
+- *Official source* — where to get the maintained copy: **this repo** for every
+  plugin, since no third-party upstream repo is maintained.
+- *Origin* — where the code first came from, with a URL where one still
+  resolves; dead links are marked **down**.
 
-| Plugin | Official source | Origin (historical) | Original author | License | Status |
-|---|---|---|---|---|---|
-| [`arista/`](arista/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ✅ |
-| [`ciscoasa/`](ciscoasa/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`dumpcheck/`](dumpcheck/) | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`freshfiles/`](freshfiles/) | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`interface/`](interface/) | **this repo** (upstream [blog](https://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) **down**) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | netdar (2013) | ❌ none | ⚠️ no upstream license |
-| [`logfetchupdate/`](logfetchupdate/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`omsa-raid/`](omsa-raid/) | no repo — orig. via Xymon list ([2009](https://lists.xymon.com/xymon/2009-March/023783.html), [2011](https://lists.xymon.com/xymon/2011-September/032429.html)) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Ben Argyle, U. Cambridge | Public domain | ✅ |
-| [`openmanage/`](openmanage/) | no repo — orig. via [hobbit list (2008)](https://lists.xymon.com/archive/2008-November/022358.html) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
-| [`postfixq/`](postfixq/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`raid-monitor/`](raid-monitor/) | **this repo** (upstream it-eckert.com **down**, NXDOMAIN) | [Wayback (2017)](http://web.archive.org/web/20170515074814/http://www.it-eckert.com:80/software/raid-monitor/) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
-| [`remotehttp/`](remotehttp/) | no repo found — likely original (**this repo**) | unknown | unstated | ❌ none | ❌ license TBD |
-| [`rhn/`](rhn/) | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| Plugin | Side | Official source | Origin (historical) | Original author | License | Status |
+|---|---|---|---|---|---|---|
+| [`arista/`](arista/) | server | **this repo** | Original work | spiderr (2026) | GPL-2+ | ✅ |
+| [`ciscoasa/`](ciscoasa/) | server | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`dumpcheck/`](dumpcheck/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| [`freshfiles/`](freshfiles/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| [`interface/`](interface/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks); [blog](https://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) **down** | netdar (2013) | ❌ none | ⚠️ no upstream license |
+| [`logfetchupdate/`](logfetchupdate/) | client | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`omsa-raid/`](omsa-raid/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); Xymon list [2009](https://lists.xymon.com/xymon/2009-March/023783.html), [2011](https://lists.xymon.com/xymon/2011-September/032429.html) | Ben Argyle, U. Cambridge | Public domain | ✅ |
+| [`openmanage/`](openmanage/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); [hobbit list (2008)](https://lists.xymon.com/archive/2008-November/022358.html) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
+| [`postfixq/`](postfixq/) | client | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`raid-monitor/`](raid-monitor/) | client | **this repo** | it-eckert.com **down** (NXDOMAIN); [Wayback (2017)](http://web.archive.org/web/20170515074814/http://www.it-eckert.com:80/software/raid-monitor/) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
+| [`remotehttp/`](remotehttp/) | server | **this repo** | unknown (no repo found) | unstated | ❌ none | ❌ license TBD |
+| [`rhn/`](rhn/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
 
 **Legend:** ✅ complete · ⚠️ minor gap · ❌ real gap · **this repo** =
 [`xymon-monitoring/xymon-plugins`](https://github.com/xymon-monitoring/xymon-plugins)
