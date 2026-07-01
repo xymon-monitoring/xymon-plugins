@@ -60,22 +60,27 @@ the original author**, and their license governs redistribution. The *Origin*
 column records where a plugin's code first came from (historical source), not
 who maintains it now.
 
-| Plugin | Origin (historical) | Original author | License | Status |
-|---|---|---|---|---|
-| [`arista/`](arista/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ✅ |
-| [`ciscoasa/`](ciscoasa/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`dumpcheck/`](dumpcheck/) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`freshfiles/`](freshfiles/) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`interface/`](interface/) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) (via [Dafert blog](https://blog.dafert.org/)) | netdar (2013) | ❌ none | ⚠️ no upstream license |
-| [`logfetchupdate/`](logfetchupdate/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`omsa-raid/`](omsa-raid/) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Ben Argyle, U. Cambridge | Public domain | ✅ |
-| [`openmanage/`](openmanage/) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
-| [`postfixq/`](postfixq/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
-| [`raid-monitor/`](raid-monitor/) | [it-eckert.com](http://www.it-eckert.com/software/raid-monitor) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
-| [`remotehttp/`](remotehttp/) | unknown | unstated | ❌ none | ❌ missing origin + license |
-| [`rhn/`](rhn/) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+*Official source* = the authoritative, maintained home (**this repo** for
+original work; the original author's upstream for third-party code).
+*Origin* = where the code first came from historically.
 
-**Legend:** ✅ complete · ⚠️ minor gap · ❌ real gap
+| Plugin | Official source | Origin (historical) | Original author | License | Status |
+|---|---|---|---|---|---|
+| [`arista/`](arista/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ✅ |
+| [`ciscoasa/`](ciscoasa/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`dumpcheck/`](dumpcheck/) | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| [`freshfiles/`](freshfiles/) | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| [`interface/`](interface/) | none (unmaintained upstream) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) (via [Dafert blog](https://blog.dafert.org/)) | netdar (2013) | ❌ none | ⚠️ no upstream license |
+| [`logfetchupdate/`](logfetchupdate/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`omsa-raid/`](omsa-raid/) | Ben Argyle (U. Cambridge) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Ben Argyle, U. Cambridge | Public domain | ✅ |
+| [`openmanage/`](openmanage/) | UC / Brian Smith-Sweeney | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
+| [`postfixq/`](postfixq/) | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`raid-monitor/`](raid-monitor/) | [it-eckert.com](http://www.it-eckert.com/software/raid-monitor) | [it-eckert.com](http://www.it-eckert.com/software/raid-monitor) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
+| [`remotehttp/`](remotehttp/) | unknown (TBD) | unknown | unstated | ❌ none | ❌ missing origin + license |
+| [`rhn/`](rhn/) | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+
+**Legend:** ✅ complete · ⚠️ minor gap · ❌ real gap · **this repo** =
+[`xymon-monitoring/xymon-plugins`](https://github.com/xymon-monitoring/xymon-plugins)
 
 ### Open items
 
