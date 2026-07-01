@@ -50,12 +50,51 @@ All plugins expect the standard Xymon client environment sourced from `xymonclie
 | `$XYMONCLIENTHOME` | Xymon client install root |
 | `$XYMONTMP` | Temp directory for Xymon client |
 
-## Sources
+## Licensing & provenance
 
-Merged from:
-- [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) — dumpcheck, freshfiles, rhn, interface, raid-monitor
-- [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) — omsa-raid, openmanage
-- Local production customizations — postfixq, logfetchupdate, dumpcheck v96h/4%, ciscoasa, arista, remotehttp
+This repository is the **canonical maintenance source** for the plugins that
+originate here — the GPL-2+ scripts authored by spiderr (marked *Original work*
+below). For plugins authored by third parties, this repo redistributes and
+patches a copy under the original license; the **authoritative source stays with
+the original author**, and their license governs redistribution. The *Origin*
+column records where a plugin's code first came from (historical source), not
+who maintains it now.
+
+| Plugin | Origin (historical) | Original author | License | Status |
+|---|---|---|---|---|
+| [`arista/`](arista/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ✅ |
+| [`ciscoasa/`](ciscoasa/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`dumpcheck/`](dumpcheck/) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| [`freshfiles/`](freshfiles/) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+| [`interface/`](interface/) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) (via [Dafert blog](https://blog.dafert.org/)) | netdar (2013) | ❌ none | ⚠️ no upstream license |
+| [`logfetchupdate/`](logfetchupdate/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`omsa-raid/`](omsa-raid/) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Ben Argyle, U. Cambridge | Public domain | ✅ |
+| [`openmanage/`](openmanage/) | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
+| [`postfixq/`](postfixq/) | Original work (this repo) | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
+| [`raid-monitor/`](raid-monitor/) | [it-eckert.com](http://www.it-eckert.com/software/raid-monitor) | Thomas Eckert (2006–2014) | Custom "as-is" | ✅ |
+| [`remotehttp/`](remotehttp/) | unknown | unstated | ❌ none | ❌ missing origin + license |
+| [`rhn/`](rhn/) | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
+
+**Legend:** ✅ complete · ⚠️ minor gap · ❌ real gap
+
+### Open items
+
+1. **`remotehttp`** *(❌ priority)* — no origin and no license. Trace the source
+   (likely a `spiderr/xymon-*` repo) or, if original, declare it "Original work
+   (this repo)" + GPL-2+. Add both `## Origin` and `## License` to its README.
+2. **`ciscoasa` / `logfetchupdate` / `postfixq`** *(⚠️ cosmetic)* — the `## Origin`
+   section is empty; fill it with "Original work — this repository".
+3. **`interface`** *(⚠️ decision)* — no license was ever granted by the original
+   author (netdar, 2013); redistribution rights are unclear. Decide: keep with a
+   disclaimer, contact the author, or remove.
+4. **Maintenance status** — confirm with spiderr whether ongoing maintenance of
+   the upstream-originated plugins is delegated to this repository.
+
+### Licenses in this collection
+
+GPL-2+ (most) · Public domain (`omsa-raid`) · UC academic, **non-commercial**
+(`openmanage`) · Custom "as-is" (`raid-monitor`) · **no license** (`interface`,
+`remotehttp`).
 
 ## Server configuration
 
