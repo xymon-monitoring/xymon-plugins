@@ -12,7 +12,7 @@ Provided on a best-effort basis. Tested on RHEL/CentOS/AlmaLinux 9.
 | [`ciscoasa/`](ciscoasa/) | Python 3 | `cpu` `memory` `conn` `hardware` `net` `vpn` | Cisco ASA firewall health — server-side SSH poller |
 | [`dumpcheck/`](dumpcheck/) | Perl | `dumpcheck` | Backup file age and size regression |
 | [`freshfiles/`](freshfiles/) | Perl | `freshbackups` | File freshness — all files in a glob updated within time window |
-| [`interface/`](interface/) | Python 2 | `interface` | Network interface speed, duplex, and link state via `ethtool` |
+| [`interface/`](interface/) | Python 3 | `interface` | Network interface speed, duplex, and link state via `ethtool` |
 | [`logfetchupdate/`](logfetchupdate/) | sh | — | Downloads updated `logfetch` config from server (Terabithia) |
 | [`omsa-raid/`](omsa-raid/) | sh | `hardware` | Dell PERC RAID via OpenManage `omreport` (OMSA) |
 | [`openmanage/`](openmanage/) | bash | `hardware` | Dell chassis health (fans, temps, PSUs, memory) via `omreport chassis` |
@@ -71,7 +71,7 @@ third-party code the original license still governs redistribution.
 | [`ciscoasa/`](ciscoasa/) | server | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`dumpcheck/`](dumpcheck/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
 | [`freshfiles/`](freshfiles/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`interface/`](interface/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks); orig. blog [archived 2018](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) (live site **down**) | netdar (2013) | ❌ none | ⚠️ see note below |
+| [`interface/`](interface/) | client | **this repo** | reimplemented clean-room; design orig. netdar (2013), [blog archived](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) | xymon-monitoring (2026) | GPL-2+ | ✅ |
 | [`logfetchupdate/`](logfetchupdate/) | client | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`omsa-raid/`](omsa-raid/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); Xymon list [2009](https://lists.xymon.com/xymon/2009-March/023783.html), [2011](https://lists.xymon.com/xymon/2011-September/032429.html) | Ben Argyle, U. Cambridge | Public domain | ✅ |
 | [`openmanage/`](openmanage/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); [hobbit list (2008)](https://lists.xymon.com/archive/2008-November/022358.html) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
@@ -90,45 +90,21 @@ third-party code the original license still governs redistribution.
    (this repo)" + GPL-2+. Add both `## Origin` and `## License` to its README.
 2. **`ciscoasa` / `logfetchupdate` / `postfixq`** *(⚠️ cosmetic)* — the `## Origin`
    section is empty; fill it with "Original work — this repository".
-3. **`interface` — unlicensed third-party code** *(⚠️ decision required)*
-
-   Findings (verified 2026-07):
-   - **Author:** netdar — from the script header (`Created on Aug 9, 2013` /
-     `@author: netdar`). "netdar" is the PyDev/Eclipse default author tag (the
-     author's local username), not a traceable public identity. A GitHub profile
-     [`Netdar`](https://github.com/Netdar) exists but is unconfirmed as the same
-     person.
-   - **Republished by** Andreas Dafert (blog handle *funksen*) on 2013-09-13.
-     Dafert is **not** the author — he only reposted the script. Credit netdar.
-   - **Upstream status:** the blog is offline; only a Wayback copy remains
-     ([2018 snapshot](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/)),
-     and it shows the code as **screenshots only** — the downloadable `iface.py`
-     was never archived. No copy exists elsewhere on GitHub.
-   - **License:** none — absent from the script, the blog post, and the site
-     (no global/Creative Commons license). All-rights-reserved by default.
-
-   Legal note: a public blog is **not** public domain — copyright is automatic and
-   retained by the author. An *implied license* (from publishing a downloadable
-   script with install instructions) may cover **use**, but not redistribution or
-   relicensing; and here the person who published it (Dafert) was not the rights
-   holder, which weakens it further. Redistributing this file under GPL-2+ is
-   therefore not clearly permitted.
-
-   Options:
-   - **(a) Rewrite** the check as original work → clean GPL-2+, removes the
-     dependency on netdar entirely. Recommended — it is a small `ethtool`-parsing
-     script.
-   - **(b) Keep as-is with a disclaimer** — do **not** relicense; mark it
-     "third-party, no license granted, all rights remain with netdar, redistributed
-     on a best-effort basis," accepting the grey area.
+3. **`interface`** — ✅ **resolved by rewrite.** The original (netdar, 2013,
+   republished on Andreas Dafert's now-offline blog) carried **no license**, and a
+   public blog is not public domain — copyright stays with the author, and any
+   implied license would cover *use*, not redistribution/relicensing. Rather than
+   ship unlicensed third-party code, the check was **reimplemented clean-room** in
+   Python 3 under GPL-2+ (same `interface` column and `--debug`/`--speed`
+   behaviour, no shared code). netdar is credited as design inspiration only. Full
+   provenance and rationale: [`interface/README.md`](interface/README.md#origin).
 4. **Maintenance status** — confirm with spiderr whether ongoing maintenance of
    the upstream-originated plugins is delegated to this repository.
 
 ### Licenses in this collection
 
 GPL-2+ (most) · Public domain (`omsa-raid`) · UC academic, **non-commercial**
-(`openmanage`) · Custom "as-is" (`raid-monitor`) · **no license** (`interface`,
-`remotehttp`).
+(`openmanage`) · Custom "as-is" (`raid-monitor`) · **no license** (`remotehttp`).
 
 ## Server configuration
 
