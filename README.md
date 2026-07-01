@@ -71,7 +71,7 @@ third-party code the original license still governs redistribution.
 | [`ciscoasa/`](ciscoasa/) | server | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`dumpcheck/`](dumpcheck/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
 | [`freshfiles/`](freshfiles/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`interface/`](interface/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks); [blog](https://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) **down** | netdar (2013) | ❌ none | ⚠️ no upstream license |
+| [`interface/`](interface/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks); orig. blog [archived 2018](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) (live site **down**) | netdar (2013) | ❌ none | ⚠️ see note below |
 | [`logfetchupdate/`](logfetchupdate/) | client | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`omsa-raid/`](omsa-raid/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); Xymon list [2009](https://lists.xymon.com/xymon/2009-March/023783.html), [2011](https://lists.xymon.com/xymon/2011-September/032429.html) | Ben Argyle, U. Cambridge | Public domain | ✅ |
 | [`openmanage/`](openmanage/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); [hobbit list (2008)](https://lists.xymon.com/archive/2008-November/022358.html) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
@@ -90,9 +90,37 @@ third-party code the original license still governs redistribution.
    (this repo)" + GPL-2+. Add both `## Origin` and `## License` to its README.
 2. **`ciscoasa` / `logfetchupdate` / `postfixq`** *(⚠️ cosmetic)* — the `## Origin`
    section is empty; fill it with "Original work — this repository".
-3. **`interface`** *(⚠️ decision)* — no license was ever granted by the original
-   author (netdar, 2013); redistribution rights are unclear. Decide: keep with a
-   disclaimer, contact the author, or remove.
+3. **`interface` — unlicensed third-party code** *(⚠️ decision required)*
+
+   Findings (verified 2026-07):
+   - **Author:** netdar — from the script header (`Created on Aug 9, 2013` /
+     `@author: netdar`). "netdar" is the PyDev/Eclipse default author tag (the
+     author's local username), not a traceable public identity. A GitHub profile
+     [`Netdar`](https://github.com/Netdar) exists but is unconfirmed as the same
+     person.
+   - **Republished by** Andreas Dafert (blog handle *funksen*) on 2013-09-13.
+     Dafert is **not** the author — he only reposted the script. Credit netdar.
+   - **Upstream status:** the blog is offline; only a Wayback copy remains
+     ([2018 snapshot](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/)),
+     and it shows the code as **screenshots only** — the downloadable `iface.py`
+     was never archived. No copy exists elsewhere on GitHub.
+   - **License:** none — absent from the script, the blog post, and the site
+     (no global/Creative Commons license). All-rights-reserved by default.
+
+   Legal note: a public blog is **not** public domain — copyright is automatic and
+   retained by the author. An *implied license* (from publishing a downloadable
+   script with install instructions) may cover **use**, but not redistribution or
+   relicensing; and here the person who published it (Dafert) was not the rights
+   holder, which weakens it further. Redistributing this file under GPL-2+ is
+   therefore not clearly permitted.
+
+   Options:
+   - **(a) Rewrite** the check as original work → clean GPL-2+, removes the
+     dependency on netdar entirely. Recommended — it is a small `ethtool`-parsing
+     script.
+   - **(b) Keep as-is with a disclaimer** — do **not** relicense; mark it
+     "third-party, no license granted, all rights remain with netdar, redistributed
+     on a best-effort basis," accepting the grey area.
 4. **Maintenance status** — confirm with spiderr whether ongoing maintenance of
    the upstream-originated plugins is delegated to this repository.
 
