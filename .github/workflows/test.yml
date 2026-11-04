@@ -3,8 +3,13 @@ name: test
 # The tests run against Xymon's main branch, built here: the API reads what a
 # real xymond answers, so that is what it is tested with. The weekly run
 # catches a change in Xymon that breaks the API when nothing here changed.
+#
+# A push runs them on the integration branches alone -- main, and dev on a
+# fork that has one -- and a pull request runs them on its head: a branch
+# pushed with a pull request open used to run them twice, once for each.
 on:
   push:
+    branches: [main, dev]
   pull_request:
   schedule:
     - cron: "17 5 * * 1"
