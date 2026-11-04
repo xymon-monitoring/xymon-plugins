@@ -10,7 +10,7 @@
 # the API's index, or ask with it, needs none.
 
 # The Python to run with: XYMONAPI_PYTHON when set; else the virtualenv
-# beside the plugins, ../venv, which ./install.sh venv-server (venv-tools elsewhere) makes
+# beside the plugins, ../venv, which ./install.sh venv makes
 # with their modules; else
 # python3 on PATH, without a word: a command that needs a module it lacks
 # says which, and what installs it, when it needs it.

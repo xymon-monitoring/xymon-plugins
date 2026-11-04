@@ -10,11 +10,11 @@
 # Python they chose on their own module.
 # How the virtualenv comes to be: an install that needs modules makes it from
 # the Python PYTHON= names when that one has them, with --system-site-packages
-# and fetching nothing; says which Python ./install.sh venv-server would use when none has;
+# and fetching nothing; says which Python ./install.sh venv would use when none has;
 # and says which modules a virtualenv already there lacks. On a terminal --
 # tests/lib/answer.py gives the install one -- those two hints are offers:
-# "y" makes the virtualenv, or completes it, with ./install.sh venv-tools; "N"
-# leaves the hint. Without a terminal nothing is asked. ./install.sh venv-tools
+# "y" makes the virtualenv, or completes it, with ./install.sh venv; "N"
+# leaves the hint. Without a terminal nothing is asked. ./install.sh venv
 # makes it with PYTHON, and leaves one that is there alone. A command whose
 # module is missing says what installs it.
 #
@@ -50,25 +50,25 @@ mkdir -p "$work/lacks"
 printf '#!/bin/sh\ncase "$*" in *"print("*) echo "fastembed numpy" ;; *find_spec*) exit 1 ;; esac\nexit 0\n' > "$work/lacks/python3"
 chmod 755 "$work/lacks/python3"
 
-# The three client-side plugins, as ./install.sh install-tools lays them out, on a
+# The three client-side plugins, as ./install.sh install lays them out, on a
 # machine whose Python lacks the modules: no virtualenv is made, and the
-# install says what ./install.sh venv-server would use.
+# install says what ./install.sh venv would use.
 prefix=$work/prefix
 lib=$prefix/libexec/xymon-plugins
 for p in xymonapi-mcp xymonapi-rag; do
-	"$ROOT/install.sh" install-tools "$p" PREFIX="$prefix" PYTHON="$work/lacks/python3" >"$work/install-$p.log" 2>&1 \
-		|| fail "install.sh install-tools of $p failed: $(tail -n 5 "$work/install-$p.log")"
+	"$ROOT/install.sh" install "$p" PREFIX="$prefix" PYTHON="$work/lacks/python3" >"$work/install-$p.log" 2>&1 \
+		|| fail "install.sh install of $p failed: $(tail -n 5 "$work/install-$p.log")"
 done
 [ -e "$lib/venv" ] && fail "a virtualenv was made with no Python that has the modules"
-assert_contains "no Python with the modules this plugin needs (fastembed numpy): ./install.sh venv-tools PYTHON=$work/lacks/python3" \
-	"$(cat "$work/install-xymonapi-rag.log")" "installing a plugin that needs modules, with none that has them, names the Python ./install.sh venv-tools would use"
+assert_contains "no Python with the modules this plugin needs (fastembed numpy): ./install.sh venv PYTHON=$work/lacks/python3" \
+	"$(cat "$work/install-xymonapi-rag.log")" "installing a plugin that needs modules, with none that has them, names the Python ./install.sh venv would use"
 assert_not_contains "[y/N]" "$(cat "$work/install-xymonapi-rag.log")" "and, with no terminal, asks nothing"
 assert_not_contains "virtualenv" "$(cat "$work/install-xymonapi-mcp.log")" "a plugin that needs no modules says nothing of it"
 # On the server the hint names the server's command, not the client's.
-"$ROOT/install.sh" install xymonapi XYMONHOME="$work/server" MANDIR="$work/man" PYTHON="$work/lacks/python3" >"$work/install-server.log" 2>&1 \
-	|| fail "install.sh install-server of xymonapi failed: $(tail -n 5 "$work/install-server.log")"
-assert_contains "(fastapi uvicorn yaml): ./install.sh venv-server PYTHON=$work/lacks/python3" \
-	"$(cat "$work/install-server.log")" "installing on the server names ./install.sh venv-server"
+"$ROOT/install.sh" install xymonapi XYMONHOME="$work/server" MANDIR="$work/man" PYTHON="$work/lacks/python3" >"$work/install.log" 2>&1 \
+	|| fail "install.sh install of xymonapi failed: $(tail -n 5 "$work/install.log")"
+assert_contains "(fastapi uvicorn yaml): XYMONHOME=... ./install.sh venv PYTHON=$work/lacks/python3" \
+	"$(cat "$work/install.log")" "installing on the server names ./install.sh venv"
 
 fake "$lib/venv/bin" venv
 fake "$work/path" path
@@ -127,41 +127,41 @@ done
 rc=0
 XYMONAPI_PYTHON="$work/lacks/python3" "$ROOT/plugins/xymonapi/xymonapi.sh" < /dev/null > /dev/null 2> "$work/err" || rc=$?
 assert_equal "77" "$rc" "the API without its modules cannot run here"
-assert_contains "XYMONHOME=... ./install.sh venv-server installs them" "$(cat "$work/err")" "and says what installs them"
+assert_contains "XYMONHOME=... ./install.sh venv installs them" "$(cat "$work/err")" "and says what installs them"
 
 # An install that needs modules, with a Python that has them: the virtualenv
 # is made from it, with --system-site-packages, and nothing is fetched.
 : > "$work/python.log"
-"$ROOT/install.sh" install-tools xymonapi-rag PREFIX="$prefix" PYTHON="$work/has/python3" >"$work/install2.log" 2>&1 \
-	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/install2.log")"
+"$ROOT/install.sh" install xymonapi-rag PREFIX="$prefix" PYTHON="$work/has/python3" >"$work/install2.log" 2>&1 \
+	|| fail "install.sh install failed: $(tail -n 5 "$work/install2.log")"
 assert_contains "has -m venv --system-site-packages $lib/venv" "$(cat "$work/python.log")" "a Python with the modules makes the virtualenv, sharing its modules"
 assert_not_contains "pip" "$(cat "$work/python.log")" "and nothing is installed"
 assert_contains "Made $lib/venv from $work/has/python3" "$(cat "$work/install2.log")" "and the install says so"
 
-# A virtualenv there that lacks a module: said, for ./install.sh venv-server, and nothing
+# A virtualenv there that lacks a module: said, for ./install.sh venv, and nothing
 # fetched; one that has them: nothing said.
 mkdir -p "$lib/venv/bin"; cp "$work/lacks/python3" "$lib/venv/bin/python3"
-"$ROOT/install.sh" install-tools xymonapi-rag PREFIX="$prefix" >"$work/install3.log" 2>&1 \
-	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/install3.log")"
+"$ROOT/install.sh" install xymonapi-rag PREFIX="$prefix" >"$work/install3.log" 2>&1 \
+	|| fail "install.sh install failed: $(tail -n 5 "$work/install3.log")"
 assert_contains "The virtualenv $lib/venv lacks fastembed numpy" "$(cat "$work/install3.log")" "a virtualenv lacking the modules is said"
 fake "$lib/venv/bin" venv
-"$ROOT/install.sh" install-tools xymonapi-rag PREFIX="$prefix" >"$work/install4.log" 2>&1 \
-	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/install4.log")"
+"$ROOT/install.sh" install xymonapi-rag PREFIX="$prefix" >"$work/install4.log" 2>&1 \
+	|| fail "install.sh install failed: $(tail -n 5 "$work/install4.log")"
 assert_not_contains "virtualenv" "$(cat "$work/install4.log")" "and one that has them, nothing"
 
-# ./install.sh venv-tools makes the virtualenv with PYTHON, where only plugins
+# ./install.sh venv makes the virtualenv with PYTHON, where only plugins
 # without modules are installed, so that nothing is fetched; run again, it
 # keeps the one there; and the launcher takes it without a word.
 prefix2=$work/prefix2
-"$ROOT/install.sh" install-tools xymonapi-mcp PREFIX="$prefix2" >"$work/install5.log" 2>&1 \
-	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/install5.log")"
-"$ROOT/install.sh" venv-tools xymonapi-mcp PREFIX="$prefix2" PYTHON="$real" >"$work/venv.log" 2>&1 \
-	|| fail "install.sh venv-tools failed: $(tail -n 5 "$work/venv.log")"
-[ -x "$prefix2/libexec/xymon-plugins/venv/bin/python3" ] || fail "install.sh venv-tools made no venv/bin/python3"
-assert_contains "run with $prefix2/libexec/xymon-plugins/venv/bin/python3" "$(cat "$work/venv.log")" "./install.sh venv-tools says what the plugins now run with"
+"$ROOT/install.sh" install xymonapi-mcp PREFIX="$prefix2" >"$work/install5.log" 2>&1 \
+	|| fail "install.sh install failed: $(tail -n 5 "$work/install5.log")"
+"$ROOT/install.sh" venv xymonapi-mcp PREFIX="$prefix2" PYTHON="$real" >"$work/venv.log" 2>&1 \
+	|| fail "install.sh venv failed: $(tail -n 5 "$work/venv.log")"
+[ -x "$prefix2/libexec/xymon-plugins/venv/bin/python3" ] || fail "install.sh venv made no venv/bin/python3"
+assert_contains "run with $prefix2/libexec/xymon-plugins/venv/bin/python3" "$(cat "$work/venv.log")" "./install.sh venv says what the plugins now run with"
 : > "$prefix2/libexec/xymon-plugins/venv/kept"
-"$ROOT/install.sh" venv-tools PREFIX="$prefix2" PYTHON="$real" >"$work/venv2.log" 2>&1 \
-	|| fail "install.sh venv-tools at the top failed: $(tail -n 5 "$work/venv2.log")"
+"$ROOT/install.sh" venv PREFIX="$prefix2" PYTHON="$real" >"$work/venv2.log" 2>&1 \
+	|| fail "install.sh venv at the top failed: $(tail -n 5 "$work/venv2.log")"
 assert_file_exists "$prefix2/libexec/xymon-plugins/venv/kept"
 : > "$work/err"
 XYMONAPI_PYTHON="" "$prefix2/bin/xymonapi-mcp" < /dev/null > /dev/null 2> "$work/err" || true
@@ -188,15 +188,15 @@ for yn in y N; do
 	: > "$work/python.log"
 	rc=0
 	"$py" "$ROOT/tests/lib/answer.py" '[y/N] ' "$yn" \
-		"$ROOT/install.sh" install-tools xymonapi-rag PREFIX="$pre" PYTHON="$work/maker/python3" > "$work/offer-$yn.log" 2>&1 || rc=$?
-	[ "$rc" -eq 0 ] || fail "install.sh install-tools answering $yn failed with $rc: $(tail -n 5 "$work/offer-$yn.log")"
+		"$ROOT/install.sh" install xymonapi-rag PREFIX="$pre" PYTHON="$work/maker/python3" > "$work/offer-$yn.log" 2>&1 || rc=$?
+	[ "$rc" -eq 0 ] || fail "install.sh install answering $yn failed with $rc: $(tail -n 5 "$work/offer-$yn.log")"
 	assert_contains "xymonapi-rag needs fastembed numpy, which no Python here has (only to keep an index on this machine: search and ask through the server need none). Make a virtualenv at $pre/libexec/xymon-plugins/venv with $work/maker/python3, and install them from PyPI? [y/N]" \
 		"$(cat "$work/offer-$yn.log")" "on a terminal, the install offers the virtualenv, saying what the modules are for here"
 	if [ "$yn" = y ]; then
 		assert_contains "venvpy -m pip install -q -r $pre/libexec/xymon-plugins/xymonapi-rag/requirements.txt" "$(cat "$work/python.log")" "y makes it and installs the modules into it"
 	else
 		[ -e "$pre/libexec/xymon-plugins/venv" ] && fail "N made a virtualenv"
-		assert_contains "./install.sh venv-tools PYTHON=$work/maker/python3 makes one" "$(cat "$work/offer-$yn.log")" "N leaves the hint"
+		assert_contains "./install.sh venv PYTHON=$work/maker/python3 makes one" "$(cat "$work/offer-$yn.log")" "N leaves the hint"
 	fi
 done
 # A virtualenv there that lacks them: "y" installs them into it.
@@ -207,9 +207,9 @@ chmod 755 "$pre/libexec/xymon-plugins/venv/bin/python3"
 : > "$work/python.log"
 rc=0
 "$py" "$ROOT/tests/lib/answer.py" '[y/N] ' y \
-	"$ROOT/install.sh" install-tools xymonapi-rag PREFIX="$pre" > "$work/offer-lacks.log" 2>&1 || rc=$?
-[ "$rc" -eq 0 ] || fail "install.sh install-tools over a lacking virtualenv failed with $rc: $(tail -n 5 "$work/offer-lacks.log")"
+	"$ROOT/install.sh" install xymonapi-rag PREFIX="$pre" > "$work/offer-lacks.log" 2>&1 || rc=$?
+[ "$rc" -eq 0 ] || fail "install.sh install over a lacking virtualenv failed with $rc: $(tail -n 5 "$work/offer-lacks.log")"
 assert_contains "lacks fastembed numpy, which xymonapi-rag needs (only to keep an index" "$(cat "$work/offer-lacks.log")" "a virtualenv lacking the modules is offered them"
 assert_contains "lacksvenv -m pip install -q -r $pre/libexec/xymon-plugins/xymonapi-rag/requirements.txt" "$(cat "$work/python.log")" "and y installs them into it"
 
-pass "a launcher runs with XYMONAPI_PYTHON, else the virtualenv beside the plugins, else the python3 on PATH, asking nothing; an install makes the virtualenv from a Python that has the modules, fetching nothing, and otherwise says which ./install.sh venv-server would use, or on a terminal offers to make or complete it; a command lacking modules says what installs them"
+pass "a launcher runs with XYMONAPI_PYTHON, else the virtualenv beside the plugins, else the python3 on PATH, asking nothing; an install makes the virtualenv from a Python that has the modules, fetching nothing, and otherwise says which ./install.sh venv would use, or on a terminal offers to make or complete it; a command lacking modules says what installs them"

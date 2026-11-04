@@ -86,6 +86,6 @@ answer '[C3]' GET "$v1/alarms" 502 upstream -u alice:secret
 # /plugins answers without a user: here, run from the repository with
 # nothing staged, that nothing is staged, not that a user is missing.
 answer '[C4]' GET "$v1/plugins" 404 not_found
-assert_contains "./install.sh install-server there stages it" "$(curl -s "http://127.0.0.1:$API_PORT$v1/plugins")" "and what to do about it"
+assert_contains "./install.sh install there stages it" "$(curl -s "http://127.0.0.1:$API_PORT$v1/plugins")" "and what to do about it"
 
 pass "every failure is an error openapi.yaml lists, with its status, every answer an X-Request-Id, and /plugins needs no user"

@@ -4,18 +4,27 @@
 # Install, update and remove the plugins, on the Xymon server or on another
 # machine, with nothing but a POSIX shell and the usual tools: no make.
 #
-#   XYMONHOME=/usr/lib/xymon/server ./install.sh install-server [PLUGIN...]  on the Xymon server
-#   ./install.sh install-tools [PLUGIN...]       on your own machine, under PREFIX (~/.local)
-#   ./install.sh uninstall-server|uninstall-tools [PLUGIN...]
-#   ./install.sh venv-server|venv-tools          the virtualenv beside the plugins
+#   ./install.sh                     on a terminal: asks what to do, and does it
+#   ./install.sh install [PLUGIN...]
+#   ./install.sh remove [PLUGIN...]
+#   ./install.sh venv                the virtualenv beside the plugins
 #
-# The server actions are also spelt without -server, their names before the
-# tools had one. install-client and its kin are refused, naming the tools
-# action: "client" is Xymon's, the monitored host, and the action of that
-# name will install a client extension there once one is here.
+# Which side an action serves is the role this machine plays, told by
+# XYMONHOME: set -- by xymoncmd, the Xymon user's environment, or on the
+# command line -- the Xymon server's part, the plugins' tasks and the API
+# under $XYMONHOME/ext; unset, your own machine's, the plugins' commands
+# under PREFIX (~/.local). On a server machine, XYMONHOME= ./install.sh
+# install installs your own commands. Nothing installs on a monitored host,
+# Xymon's client, yet.
+#
+# With no action at all, on a terminal, the script asks: install or remove,
+# which role this machine plays, the detected one by default, and which
+# plugins, Enter taking each default; it then runs the action those answers
+# spell, saying which, so the words are there to copy for next time.
+# Without a terminal, no action means the usage.
 #
 # With no PLUGIN, every plugin of that side. A plugin that needs another
-# installs it first, and an uninstall is refused while one installed needs
+# installs it first, and a removal is refused while one installed needs
 # the plugin removed. Running an install again updates: each plugin's
 # directory is replaced as a whole, and the admin's task files, web server
 # snippets and data are kept. Settings come from the environment, or as
@@ -36,19 +45,27 @@ ROOT=$(cd "$(dirname "$0")" && pwd)
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 usage() {
-	echo "usage: ./install.sh install-server|install-tools|uninstall-server|uninstall-tools|venv-server|venv-tools [PLUGIN...] [NAME=value...]" >&2
+	echo "usage: ./install.sh install|remove|venv [PLUGIN...] [NAME=value...]   the Xymon server's part with XYMONHOME set, else your own machine's" >&2
+	echo "       ./install.sh                                                on a terminal: asks what to do" >&2
 	exit 2
 }
 
-[ $# -ge 1 ] || usage
-ACTION=$1; shift
+# The first word that is not a NAME=value setting is the action, the
+# others the plugins. No action on a terminal is the dialogue, which runs
+# once the helpers below are defined; no action elsewhere is the usage.
+ACTION=
 NAMES=
 for a in "$@"; do
 	case $a in
 		*=*) export "$a" ;;
-		*) NAMES="$NAMES $a" ;;
+		*) if [ -z "$ACTION" ]; then ACTION=$a; else NAMES="$NAMES $a"; fi ;;
 	esac
 done
+DIALOGUE=
+if [ -z "$ACTION" ]; then
+	[ -t 0 ] && [ -t 1 ] || usage
+	DIALOGUE=1
+fi
 
 XYMONHOME=${XYMONHOME:-}
 DESTDIR=${DESTDIR:-}
@@ -98,7 +115,7 @@ known() {
 }
 
 # depth PLUGIN -- how many plugins deep it stands on: 0 for one that needs
-# none. Uninstalling every plugin goes from the deepest up.
+# none. Removing every plugin goes from the deepest up.
 depth() {
 	d=0
 	for n in $(field "$1" needs); do
@@ -112,10 +129,6 @@ dependents() {
 	for p in $(all_plugins); do
 		case " $(field "$p" needs) " in *" $1 "*) echo "$p" ;; esac
 	done
-}
-
-need_home() {
-	[ -n "$XYMONHOME" ] || die "XYMONHOME is not set: XYMONHOME=<the Xymon server directory> ./install.sh $ACTION [PLUGIN...]"
 }
 
 # fresh DIR -- DIR, emptied: an install replaces a plugin's directory as a
@@ -149,7 +162,7 @@ manual() {
 
 # dist PLUGIN -- stage the plugin's directory under $DIST/plugins, as it is
 # in the repository but for its tests, with this script and LICENSE beside:
-# a machine unpacking it runs ./install.sh install-tools there, at the
+# a machine unpacking it runs ./install.sh install there, as itself, at the
 # server's versions. Links are copied as links, as in the repository.
 dist() {
 	rm -rf "$DIST/plugins/$1"
@@ -215,7 +228,84 @@ offer() {
 	return 1
 }
 
-# venv_auto PLUGIN ROOT MODULES TARGET NOTE -- the last step of installing a
+# ask QUESTION DEFAULT -- on a terminal, the answer to QUESTION, DEFAULT
+# when Enter alone is typed.
+ask() {
+	printf '%s [%s] ' "$1" "$2" >&2
+	read -r answer
+	[ -n "$answer" ] && echo "$answer" || echo "$2"
+}
+
+# dialogue -- the questions ./install.sh asks when given no word on a
+# terminal, then the action they spell, run as if its words had been typed.
+# The role defaults to the one XYMONHOME detects: set, the Xymon server;
+# unset, your own machine. The plugins offered are those of that role and,
+# for a removal, those installed; a plugin unticked takes with it the ones
+# that need it, and a plugin removed takes its installed dependents, each
+# named, since that is what the actions themselves insist on.
+dialogue() {
+	echo "The Xymon plugins. Enter takes the answer in brackets."
+	verb=$(ask "Install or remove?" install)
+	case $verb in
+		i*) verb=install ;;
+		r*) verb=remove ;;
+		*) die "neither install nor remove: '$verb'" ;;
+	esac
+	if [ -n "$XYMONHOME" ]; then role=1; else role=2; fi
+	echo "Which role does this machine play?"
+	echo "  1. the Xymon server: the plugins' tasks and the API, under ${XYMONHOME:-XYMONHOME}/ext"
+	echo "  2. your own machine: the plugins' commands, under $PREFIX"
+	role=$(ask "Role" "$role")
+	case $role in
+		1*) side=server; files=server-files; root=$EXTROOT ;;
+		2*) side=tools; files=tools-files; root=$TOOLSROOT ;;
+		*) die "neither 1 nor 2: '$role'" ;;
+	esac
+	if [ "$side" = server ] && [ -z "$XYMONHOME" ]; then
+		XYMONHOME=$(ask "XYMONHOME, the Xymon server directory" /usr/lib/xymon/server)
+		root=$DESTDIR$XYMONHOME/ext
+	fi
+	# The side reaches the action as XYMONHOME: set for the server's, empty
+	# for your own machine's, whatever the environment held.
+	[ "$side" = server ] || XYMONHOME=
+	export XYMONHOME
+	offered=
+	for p in $(for p in $(all_plugins); do echo "$(depth "$p") $p"; done | sort -n | cut -d' ' -f2); do
+		[ -n "$(field "$p" $files)" ] || continue
+		[ "$verb" = install ] || [ -e "$root/$p" ] || continue
+		offered="$offered $p"
+	done
+	[ -n "$offered" ] || die "nothing to $verb for that role: no plugin installed in $root"
+	echo "Plugins, all of them unless you name some:"
+	for p in $offered; do
+		printf '  %-16s %s\n' "$p" "$(field "$p" summary)"
+	done
+	chosen=$(ask "Plugins" "$(echo $offered)")
+	for n in $chosen; do
+		known "$n"
+		case " $offered " in *" $n "*) ;; *) die "$n is not among the plugins to $verb here" ;; esac
+	done
+	if [ "$verb" = install ]; then
+		for n in $chosen; do
+			for d in $(field "$n" needs); do
+				case " $chosen " in *" $d "*) ;; *) chosen="$chosen $d"; echo "With $d, which $n needs." ;; esac
+			done
+		done
+	else
+		for n in $chosen; do
+			for d in $(dependents "$n"); do
+				[ -e "$root/$d" ] || continue
+				case " $chosen " in *" $d "*) ;; *) chosen="$chosen $d"; echo "With $d, installed here, which needs $n." ;; esac
+			done
+		done
+	fi
+	[ "$(echo $chosen)" = "$(echo $offered)" ] && [ "$verb" = install ] && chosen=
+	echo "Running: ${XYMONHOME:+XYMONHOME=$XYMONHOME }./install.sh $verb $(echo $chosen)"
+	echo
+	exec "$ROOT/install.sh" "$verb" $chosen
+}
+
+# venv_auto PLUGIN ROOT MODULES NOTE -- the last step of installing a
 # plugin that needs the Python modules MODULES (their import names), which
 # downloads nothing unless asked. With no virtualenv at ROOT/venv yet: the
 # newest Python 3.9 or later on this machine that has them already --
@@ -223,21 +313,23 @@ offer() {
 # and in Homebrew's and pyenv's directories -- is made the virtualenv's,
 # with --system-site-packages, so that it is only pinned beside the plugins
 # and nothing is copied or fetched; with no such Python, the hint says which
-# ./install.sh TARGET would use. A candidate is named by the interpreter it
+# ./install.sh venv would use. A candidate is named by the interpreter it
 # runs (sys.executable), not a shim or link found on PATH. With a virtualenv
 # there, the modules it lacks are named. On a terminal the hint is an offer:
-# on "y", ./install.sh TARGET -- venv-server or venv-tools -- installs the modules
-# from PyPI there and then. NOTE says in the offer what the modules are for.
+# on "y", ./install.sh venv installs the modules from PyPI there and then.
+# NOTE says in the offer what the modules are for.
 venv_auto() {
-	plugin=$1 root=$2 modules=$3 target=$4 note=$5
+	plugin=$1 root=$2 modules=$3 note=$4
 	[ -n "$modules" ] || return 0
+	# The hint, as typed on this side: XYMONHOME names the server's.
+	target="${XYMONHOME:+XYMONHOME=... }./install.sh venv"
 	if [ -x "$root/venv/bin/python3" ]; then
 		missing=$("$root/venv/bin/python3" -c 'import importlib.util as u, sys; print(" ".join(m for m in sys.argv[1:] if u.find_spec(m) is None))' $modules)
 		[ -z "$missing" ] && return 0
 		if offer "The virtualenv $root/venv lacks $missing, which $plugin needs${note:+ ($note)}. Install them into it, from PyPI?"; then
-			"$ROOT/install.sh" "$target" || exit 1
+			"$ROOT/install.sh" venv || exit 1
 		else
-			echo "The virtualenv $root/venv lacks $missing, which this plugin needs: ./install.sh $target installs them."
+			echo "The virtualenv $root/venv lacks $missing, which this plugin needs: $target installs them."
 		fi
 		return 0
 	fi
@@ -261,9 +353,9 @@ venv_auto() {
 		"$py" -m venv --system-site-packages "$root/venv" || exit 1
 		echo "Made $root/venv from $py ($("$py" -V 2>&1)), which has the modules this plugin needs ($modules): the plugins there run with it."
 	elif [ -n "$newest" ] && offer "$plugin needs $modules, which no Python here has${note:+ ($note)}. Make a virtualenv at $root/venv with $newest, and install them from PyPI?"; then
-		PYTHON=$newest "$ROOT/install.sh" "$target" || exit 1
+		PYTHON=$newest "$ROOT/install.sh" venv || exit 1
 	else
-		echo "No virtualenv at $root/venv, and no Python with the modules this plugin needs ($modules): ./install.sh $target${newest:+ PYTHON=$newest} makes one and installs them; without it, the python3 on PATH must have them."
+		echo "No virtualenv at $root/venv, and no Python with the modules this plugin needs ($modules): $target${newest:+ PYTHON=$newest} makes one and installs them; without it, the python3 on PATH must have them."
 	fi
 }
 
@@ -297,7 +389,7 @@ install_server() {
 	conf "$1"
 	say "$1" installed
 	restart "$1"
-	venv_auto "$1" "$EXTROOT" "$(field "$1" server-modules)" venv-server ""
+	venv_auto "$1" "$EXTROOT" "$(field "$1" server-modules)" ""
 	DONE="$DONE $1"
 }
 
@@ -318,7 +410,7 @@ install_tools() {
 		chmod 755 "$BIN/$2"
 	fi
 	manual "$1" "$(field "$1" tools-manual)" "$DESTDIR$PREFIX/share/man"
-	venv_auto "$1" "$TOOLSROOT" "$(field "$1" tools-modules)" venv-tools "$(field "$1" venv-note)"
+	venv_auto "$1" "$TOOLSROOT" "$(field "$1" tools-modules)" "$(field "$1" venv-note)"
 	DONE="$DONE $1"
 }
 
@@ -326,37 +418,34 @@ install_tools() {
 # needs it beside it: removing it would leave that one broken.
 needed() {
 	for d in $(dependents "$1"); do
-		[ -e "$2/$d" ] && die "$1 is needed by $d, installed in $2: uninstall $d first"
+		[ -e "$2/$d" ] && die "$1 is needed by $d, installed in $2: remove $d first"
 	done
 	return 0
 }
 
-uninstall_server() {
+remove_server() {
 	needed "$1" "$EXTROOT"
 	needed "$1" "$DIST/plugins"
 	rm -rf "$EXTROOT/$1" "$DIST/plugins/$1"
 	m=$(field "$1" server-manual)
 	[ -n "$m" ] && rm -f "$DESTDIR$MANDIR/man${m##*.}/$m"
 	[ -n "$(field "$1" task)" ] && rm -f "$TASKDIR/$1"
-	say "$1" uninstalled
+	say "$1" removed
 }
 
-uninstall_tools() {
+remove_tools() {
 	needed "$1" "$TOOLSROOT"
 	rm -rf "$TOOLSROOT/$1"
 	set -- "$1" $(field "$1" command)
 	[ $# -eq 3 ] && rm -f "$BIN/$2"
 	m=$(field "$1" tools-manual)
 	[ -n "$m" ] && rm -f "$TOOLSMAN1/$m"
-	say "$1" uninstalled-tools
+	say "$1" removed-tools
 }
 
-case $ACTION in
-	install-client|uninstall-client|venv-client)
-		die "$ACTION is now ${ACTION%-client}-tools: the plugins' commands, on your own machine. A client, here, is Xymon's, on a monitored host, and nothing installs one yet." ;;
-esac
+[ -z "$DIALOGUE" ] || dialogue
 
-# The plugins named, each checked, or every plugin; for an uninstall, the
+# The plugins named, each checked, or every plugin; for a removal, the
 # deepest first, so that none is removed while one installed needs it.
 for n in $NAMES; do known "$n"; done
 if [ -n "$NAMES" ]; then LIST=$NAMES; else LIST=$(all_plugins); fi
@@ -364,24 +453,23 @@ deepest_first() {
 	for n in $LIST; do echo "$(depth "$n") $n"; done | sort -rn | cut -d' ' -f2
 }
 
-case $ACTION in
-	install|install-server)
-		need_home
+# The side: the Xymon server's with XYMONHOME set, else your own machine's.
+if [ -n "$XYMONHOME" ]; then SIDE=server; else SIDE=tools; fi
+case $ACTION-$SIDE in
+	install-server)
 		for n in $LIST; do install_server "$n"; done ;;
 	install-tools)
 		for n in $LIST; do install_tools "$n"; done ;;
-	uninstall|uninstall-server)
-		need_home
-		for n in $(deepest_first); do uninstall_server "$n"; done
+	remove-server)
+		for n in $(deepest_first); do remove_server "$n"; done
 		[ -n "$NAMES" ] || rm -rf "$EXTROOT/venv" ;;
-	uninstall-tools)
-		for n in $(deepest_first); do uninstall_tools "$n"; done
+	remove-tools)
+		for n in $(deepest_first); do remove_tools "$n"; done
 		if [ -z "$NAMES" ]; then
 			rm -rf "$TOOLSROOT/venv"
 			rmdir "$TOOLSROOT" 2>/dev/null || true
 		fi ;;
-	venv|venv-server)
-		need_home
+	venv-server)
 		venv "$EXTROOT" ;;
 	venv-tools)
 		venv "$TOOLSROOT" ;;

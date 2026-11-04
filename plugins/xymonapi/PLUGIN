@@ -24,11 +24,11 @@ conf: xymonapi-apache.conf xymonapi-nginx.conf xymonapi-lighttpd.conf
 restart: app.py
 installed: Installed. Enable the API: remove DISABLED from @TASKDIR@/xymonapi. For other machines, include one of
 installed:   @ETC@/xymonapi-{apache,nginx,lighttpd}.conf in the web server, or give the API xymond's certificate: see xymonapi(8).
-uninstalled: Uninstalled xymonapi. Kept, for you to remove: @ETC@/xymonapi-{apache,nginx,lighttpd}.conf --
-uninstalled:   take its Include out of the web server first -- and the tokens file, $XYMONAPI_TOKENS
-uninstalled:   ($XYMONVAR/xymonapi/tokens by default).
+removed: Removed xymonapi. Kept, for you to remove: @ETC@/xymonapi-{apache,nginx,lighttpd}.conf --
+removed:   take its Include out of the web server first -- and the tokens file, $XYMONAPI_TOKENS
+removed:   ($XYMONVAR/xymonapi/tokens by default).
 tools-files: xymonapi_client.py xymonapi-connect.sh
 tools-manual: xymonapi-connect.1
 command: xymonapi-connect xymonapi-connect.sh
 executable: xymonapi.sh xymonapi-connect.sh
-uninstalled-tools: Uninstalled xymonapi's client. Kept: the tokens in ~/.config/xymon-api/, which the API's /tokens revokes.
+removed-tools: Removed xymonapi's client. Kept: the tokens in ~/.config/xymon-api/, which the API's /tokens revokes.

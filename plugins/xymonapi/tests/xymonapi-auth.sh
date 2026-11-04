@@ -37,10 +37,10 @@ htpasswd -bB "$work/htpasswd" bob s3cret 2>/dev/null
 grep -q '^alice:\$apr1\$' "$work/htpasswd" || fail "htpasswd did not write alice in its \$apr1\$ format"
 grep -q '^bob:\$2y\$' "$work/htpasswd" || fail "htpasswd did not write bob as bcrypt"
 
-# The API as ./install.sh install-server lays it out, with a release's VERSION beside it,
+# The API as ./install.sh install lays it out, with a release's VERSION beside it,
 # so that /health has one to give and the script one to install.
 "$ROOT/install.sh" install XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/install.log" 2>&1 \
-	|| fail "install.sh install-server failed: $(tail -n 5 "$work/install.log")"
+	|| fail "install.sh install failed: $(tail -n 5 "$work/install.log")"
 version=xymonapi/v9.9.9
 printf '%s\n' "$version" > "$work/inst/ext/xymonapi/VERSION"
 API_ROOT=$work/inst/ext/xymonapi
@@ -89,7 +89,7 @@ grep -qx "$API_PID" <<<"$(pgrep -f "$work/inst/ext/xymonapi/" || true)" \
 # code it loaded; xymonlaunch, not run here, would start the new. With
 # DESTDIR, a package's staging, nothing runs from there: it is left alone.
 "$ROOT/install.sh" install xymonapi XYMONHOME="$work/inst" MANDIR="$work/man" DESTDIR="$work/stage" >"$work/stage.log" 2>&1 \
-	|| fail "install.sh install-server with DESTDIR failed: $(tail -n 5 "$work/stage.log")"
+	|| fail "install.sh install with DESTDIR failed: $(tail -n 5 "$work/stage.log")"
 kill -0 "$API_PID" 2>/dev/null || fail "an install with DESTDIR stopped the running API"
 assert_not_contains "Stopped" "$(cat "$work/stage.log")" "and says nothing of it"
 rc=0

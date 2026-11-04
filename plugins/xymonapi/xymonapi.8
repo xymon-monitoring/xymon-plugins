@@ -91,10 +91,10 @@ The code of the plugins installed on this server, for other machines to
 install from at this server's versions: a gzipped tar rooted at
 xymon-plugins/, laid out as the repository is -- plugins/NAME for each
 plugin installed here, without its tests, with install.sh and LICENSE.
-\fB./install.sh install-tools NAME\fR there installs that plugin.
-Each plugin's \fB./install.sh install-server\fR stages its directory in
+\fB./install.sh install NAME\fR there installs that plugin.
+Each plugin's \fB./install.sh install\fR stages its directory in
 $XYMONHOME/ext/xymon-plugins-dist/, which is what /plugins packs, and its
-\fB./install.sh uninstall-server\fR takes it out; this API names no plugin. It is the one
+\fB./install.sh remove\fR takes it out; this API names no plugin. It is the one
 path open without a user when XYMONAPI_PASSWD is set: it holds the
 plugins' code and nothing else -- no user, password, token or setting --
 though a stranger learns from it which plugins, at which versions, run
@@ -273,7 +273,7 @@ or a file that cannot be read, stops the API from starting, since running
 without the hiding asked for would be worse than not running.
 .IP "\fBXYMONAPI_ASK\fR"
 Set to 1, /ask is there; unset, empty, 0, no, off or false, it is not.
-It needs xymonapi-agent installed beside the API (\fB./install.sh install-server xymonapi-agent\fR),
+It needs xymonapi-agent installed beside the API (\fB./install.sh install xymonapi-agent\fR),
 an agent CLI installed and logged in as the Xymon user, and the socket
 (XYMONAPI_SOCKET), through which the agent reads this API. Which CLI,
 model and agent answer are xymonapi-agent(1)'s own settings,
@@ -289,7 +289,7 @@ the virtualenv beside the plugins, $XYMONHOME/ext/venv, which \fB./install.sh
 venv\fR makes with the modules the installed plugins need; without one, the
 first of python3, python3.14 down to python3.9, found on PATH. When that
 one lacks a module, the API says which on
-stderr, the task's log, names \fB./install.sh venv-server\fR, and exits with 77.
+stderr, the task's log, names \fB./install.sh venv\fR, and exits with 77.
 
 .SH FILES
 .IP "\fB$XYMONHOME/ext/xymonapi/\fR"

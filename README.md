@@ -76,11 +76,10 @@ move, how a change is made, tested and reviewed, is in
 - **Branches.** `stable` is the newest code every test passed, which CI
   moves forward; `main` holds every change as it lands. Install from
   `stable`.
-- **Install actions** name the side: `install-server`, `uninstall-server`,
-  `venv-server` on the Xymon server; `install-tools`, `uninstall-tools`,
-  `venv-tools` on your own machine. `install-client` is refused, naming
-  `install-tools`: a client is Xymon's, on a monitored host, and the action
-  of that name arrives with the first check that installs there.
+- **Install actions** are `install`, `remove` and `venv`, and the side they
+  serve is the role the machine plays, told by `XYMONHOME`: set, the Xymon
+  server's part; unset, your own machine's. Nothing installs on a monitored
+  host, Xymon's client, until the first check that does.
 - **Words.** "Client" is Xymon's client; a program that calls the Xymon API
   is an API client; Claude Code, Codex, opencode and the like are AI tools.
 - **Manual pages.** Section 8 for what runs on the server, section 1 for the
@@ -114,12 +113,22 @@ would bring.
 ## Installing
 
 ```sh
-XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME   # on the Xymon server
-./install.sh install-tools NAME                                     # on your own machine
+./install.sh
+```
+
+On a terminal, with no word, the script asks what to do: install or remove,
+which role this machine plays -- the Xymon server when `XYMONHOME` is set,
+your own machine otherwise -- and which plugins. Enter takes each default,
+and the answers run one of the commands below, said first, for you to type
+next time:
+
+```sh
+XYMONHOME=/usr/lib/xymon/server ./install.sh install NAME   # the Xymon server's part
+./install.sh install NAME                                   # your own machine's
 ```
 
 With no `NAME`, every plugin of that side. What each command puts where,
-Python and the virtualenv, enabling, updating and uninstalling are in
+Python and the virtualenv, enabling, updating and removing are in
 [`plugins/README.md`](plugins/README.md#installing-a-plugin); each plugin's
 README says only what is particular to it.
 

@@ -42,15 +42,22 @@ Every plugin installs the same way, with `./install.sh` at the
 repository's top -- a POSIX shell script, needing no `make` -- and each
 README says only what is particular to it. A plugin has up to two sides, the
 Xymon server's and your own machine's ([Where things run](../README.md#where-things-run)),
-and you install the one the machine plays. The server actions are also
-spelt without `-server`, as they were before the tools had a name of their
-own; `install-client` is refused, naming `install-tools`: a client here is
-Xymon's, on a monitored host, and nothing installs one there yet.
+and you install the one the machine plays. Run with no word on a terminal,
+`./install.sh` asks: install or remove, which role this machine plays --
+the Xymon server when `XYMONHOME` is set, your own machine otherwise --
+and which plugins, Enter taking each default; a plugin chosen alone brings
+what it needs, and a plugin removed takes the installed plugins that need
+it, each named. It then runs the command the answers spell, saying which,
+which are the ones below: the actions are `install`, `remove` and `venv`,
+and `XYMONHOME` tells the side, set for the server's part, unset for your
+own machine's. On a server machine, `XYMONHOME= ./install.sh install`
+installs your own commands. Nothing installs on a monitored host, Xymon's
+client, yet.
 
 | side | where, as whom | command | puts |
 |---|---|---|---|
-| the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `$XYMONHOME/etc/tasks.d/`, written `DISABLED`, its manual page under `MANDIR` (`/usr/share/man`) |
-| your own machine | any machine that reads the API, the server included, as yourself | `./install.sh install-tools NAME` | the code in `$PREFIX/libexec/xymon-plugins/NAME/`, its command in `$PREFIX/bin`, its manual page in `$PREFIX/share/man/man1`; `PREFIX` is `~/.local` |
+| the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `$XYMONHOME/etc/tasks.d/`, written `DISABLED`, its manual page under `MANDIR` (`/usr/share/man`) |
+| your own machine | any machine that reads the API, the server included, as yourself | `./install.sh install NAME` | the code in `$PREFIX/libexec/xymon-plugins/NAME/`, its command in `$PREFIX/bin`, its manual page in `$PREFIX/share/man/man1`; `PREFIX` is `~/.local` |
 
 A plugin that needs another installs it first, so one command is enough,
 and with no `NAME` the same two commands install every plugin of a side.
@@ -71,8 +78,8 @@ interpreter and fetching nothing. When no Python has them, or the virtualenv
 there lacks some, the install run from a terminal offers to make or complete
 it, installing the modules from PyPI -- the one virtualenv of that side,
 with the modules of every plugin installed there; without a terminal, or
-answered no, it says so, and `XYMONHOME=... ./install.sh venv-server PYTHON=...` on the
-server, or `./install.sh venv-tools PYTHON=...` elsewhere, does it later. The
+answered no, it says so, and `./install.sh venv PYTHON=...`, with
+`XYMONHOME` set on the server, does it later. The
 launchers run with `XYMONAPI_PYTHON` when it is set, else with that
 virtualenv, else with the `python3` on PATH, asking nothing; a command that
 then needs a module it lacks says which, and what installs it.
@@ -89,7 +96,7 @@ code it loaded: the API's install stops the API, saying so, and xymonlaunch
 starts the new; a task that runs from time to time, as the index, takes the
 new code at its next run.
 
-**Uninstalling.** `XYMONHOME=... ./install.sh uninstall-server NAME` or
-`./install.sh uninstall-tools NAME` removes that plugin alone, and refuses
+**Removing.** `./install.sh remove NAME`, with `XYMONHOME` set on the
+server, removes that plugin alone, and refuses
 while another installed plugin needs it, naming it; with no `NAME`, every
 plugin of the side and the virtualenv beside them. Each says what it keeps.

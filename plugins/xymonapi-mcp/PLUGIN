@@ -12,12 +12,12 @@ manual: xymonapi-mcp.1
 needs: xymonapi
 server-files: server.py xymonapi-mcp.sh
 server-manual: xymonapi-mcp.1
-uninstalled: Uninstalled xymonapi-mcp. Kept: xymonapi.
+removed: Removed xymonapi-mcp. Kept: xymonapi.
 tools-files: server.py xymonapi-mcp.sh
 tools-manual: xymonapi-mcp.1
 command: xymonapi-mcp xymonapi-mcp.sh
 executable: xymonapi-mcp.sh
-uninstalled-tools: Uninstalled xymonapi-mcp. What register did besides, to undo by hand:
-uninstalled-tools:   claude mcp remove --scope user xymon; codex mcp remove xymon
-uninstalled-tools:   revoke this machine's token: curl -X DELETE -u USER https://SERVER/xymon/api/v1/tokens/$(hostname -s)
-uninstalled-tools:   rm ~/.config/xymon-api/xymon.token
+removed-tools: Removed xymonapi-mcp. What register did besides, to undo by hand:
+removed-tools:   claude mcp remove --scope user xymon; codex mcp remove xymon
+removed-tools:   revoke this machine's token: curl -X DELETE -u USER https://SERVER/xymon/api/v1/tokens/$(hostname -s)
+removed-tools:   rm ~/.config/xymon-api/xymon.token

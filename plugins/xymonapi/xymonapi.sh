@@ -9,7 +9,7 @@
 # on 77, as they skip on a missing compiler.
 
 # The Python to run with: XYMONAPI_PYTHON when set; else the virtualenv
-# beside the plugins, ../venv, which ./install.sh venv-server (venv-tools elsewhere) makes
+# beside the plugins, ../venv, which ./install.sh venv makes
 # with their modules; else
 # python3 on PATH, without a word: a command that needs a module it lacks
 # says which, and what installs it, when it needs it.
@@ -42,7 +42,7 @@ command -v "$PYTHON" >/dev/null 2>&1 || {
 missing=`cd "$here" && "$PYTHON" -c 'import importlib.util as u
 print(" ".join(m for m in ("fastapi", "uvicorn", "yaml") if u.find_spec(m) is None))'`
 if [ -n "$missing" ]; then
-	echo "xymonapi: missing Python modules: $missing: XYMONHOME=... ./install.sh venv-server installs them in the virtualenv beside the plugins, or name a Python that has them in XYMONAPI_PYTHON" >&2
+	echo "xymonapi: missing Python modules: $missing: XYMONHOME=... ./install.sh venv installs them in the virtualenv beside the plugins, or name a Python that has them in XYMONAPI_PYTHON" >&2
 	exit 77
 fi
 

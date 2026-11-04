@@ -249,14 +249,14 @@ VERSION = installed_version()
 def _plugins(request):
     """The code of the plugins installed here, as staged for other machines,
     in a .tar.gz rooted at xymon-plugins/: what a machine runs
-    ./install.sh install-tools in, at this server's versions. Open to anyone, as the
+    ./install.sh install in, at this server's versions. Open to anyone, as the
     repository is: it holds no setting and nothing secret. Which plugins it
     holds is whatever is staged; this API names none."""
     plugins = DIST / "plugins"
     if not plugins.is_dir() or not any(plugins.iterdir()):
         return JSONResponse({"error": "not_found",
                              "detail": "no plugin's code is staged on this server: ./install.sh "
-                                       "install-server there stages it"}, status_code=404)
+                                       "install there stages it"}, status_code=404)
 
     def neutral(info: tarfile.TarInfo) -> tarfile.TarInfo:
         info.uid = info.gid = 0
@@ -372,7 +372,7 @@ async def _ask(request):
     if not AGENT.is_file():
         return JSONResponse({"error": "not_found", "detail": "XYMONAPI_ASK is set, but "
                              "xymonapi-agent is not installed beside the API: "
-                             "./install.sh install-server xymonapi-agent"}, status_code=404)
+                             "./install.sh install xymonapi-agent"}, status_code=404)
     try:
         body = await request.json()
     except ValueError:

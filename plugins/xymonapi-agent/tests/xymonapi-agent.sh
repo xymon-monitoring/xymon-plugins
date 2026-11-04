@@ -3,7 +3,7 @@
 #
 # plugins/xymonapi-agent/tests/xymonapi-agent.sh
 #
-# xymonapi-agent ask, as ./install.sh install-tools lays it out, runs the agent CLI
+# xymonapi-agent ask, as ./install.sh install lays it out, runs the agent CLI
 # it is told, or the one installed, with xymonapi-mcp beside it as the
 # agent's only tool: Claude Code with --strict-mcp-config, no built-in tools,
 # the xymon tools allowed and the rest denied; opencode with a config of its
@@ -35,8 +35,8 @@ set -euo pipefail
 ROOT=$(find_root)
 work=$(mktempdir)
 
-"$ROOT/install.sh" install-tools xymonapi-agent PREFIX="$work/client" >"$work/client.log" 2>&1 \
-	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/client.log")"
+"$ROOT/install.sh" install xymonapi-agent PREFIX="$work/client" >"$work/client.log" 2>&1 \
+	|| fail "install.sh install failed: $(tail -n 5 "$work/client.log")"
 agent=$work/client/bin/xymonapi-agent
 assert_file_exists "$work/client/libexec/xymon-plugins/xymonapi-mcp/xymonapi-mcp.sh"
 assert_file_exists "$work/client/libexec/xymon-plugins/xymonapi-agent/VERSION"

@@ -159,7 +159,7 @@ rc=0
 PYTHONPATH="$work/nonumpy" rag index > /dev/null || rc=$?
 assert_equal "77" "$rc" "index without numpy exits 77"
 assert_contains 'missing Python module: numpy' "$(cat "$work/rag.err")" "and names it"
-assert_contains './install.sh venv-tools installs it' "$(cat "$work/rag.err")" "and what installs it"
+assert_contains './install.sh venv installs it' "$(cat "$work/rag.err")" "and what installs it"
 
 # eval: a file of questions with the title each should find, and a score.
 printf '[{"question":"how long must a problem last before an alert is sent","kind":"docs","expect":"alerts.cfg.5 -- RULES"},\n{"question":"HTTP 500 error on the login page","kind":"history","expect":"web.example.com http"},\n{"question":"zebra crossing stripes","kind":"docs","expect":"zebra.1"}]\n' > "$work/eval.json"

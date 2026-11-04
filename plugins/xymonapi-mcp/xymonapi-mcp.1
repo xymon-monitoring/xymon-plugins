@@ -19,7 +19,7 @@ It runs where the AI tool runs, which need not be the Xymon server, and needs
 Python 3.9 or later and nothing else: it speaks the protocol with the
 standard library, and the searches too are the API's. Without that Python
 it says so on stderr and exits with status 77. It writes nothing but protocol
-messages on stdout. \fB./install.sh install-tools\fR puts it under a PREFIX of
+messages on stdout. \fB./install.sh install\fR puts it under a PREFIX of
 yours, as the command xymonapi-mcp, with its version in VERSION beside it.
 It is written for the xymonapi version its PLUGIN file names; when the
 API's /health gives an older one, every answer carries a "warning" field
@@ -104,7 +104,7 @@ own certificate, when the API uses it (xymon-tls(7)), is such a one.
 Verification is never turned off: the token rides on this connection.
 .IP "\fBXYMONAPI_PYTHON\fR"
 The Python to run with. Unset, the python3 of the virtualenv beside the
-plugins, $PREFIX/libexec/xymon-plugins/venv, which \fB./install.sh venv-tools\fR
+plugins, $PREFIX/libexec/xymon-plugins/venv, which \fB./install.sh venv\fR
 makes, when there is one; else the first of python3, python3.14 down to
 python3.9, found on PATH. Nothing is
 asked: this program needs no module beyond the standard library.

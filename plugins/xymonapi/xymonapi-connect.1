@@ -9,7 +9,7 @@ xymonapi-connect gets this machine a token of its own for the
 .I xymonapi(8)
 at URL, so that the programs reading the API from here send that token and
 no password. It is installed with the API's client, by
-\fB./install.sh install-tools xymonapi\fR, and run once per machine and API.
+\fB./install.sh install xymonapi\fR, and run once per machine and API.
 
 In order, it:
 .IP 1. 4
@@ -65,7 +65,7 @@ certificate there, over a channel already trusted. Verification is never
 turned off.
 .IP "\fBXYMONAPI_PYTHON\fR"
 The Python to run with. Unset, the python3 of the virtualenv beside the
-plugins, $PREFIX/libexec/xymon-plugins/venv, which \fB./install.sh venv-tools\fR
+plugins, $PREFIX/libexec/xymon-plugins/venv, which \fB./install.sh venv\fR
 makes, when there is one; else the first of python3, python3.14 down to
 python3.9, found on PATH. Nothing is
 asked: this program needs no module beyond the standard library.

@@ -74,7 +74,7 @@ not needed.
 
 It needs Python 3.9 or later, and, to index or to search an index here,
 the modules in requirements.txt beside it; when one is missing it says so
-and exits with status 77. \fB./install.sh install-tools\fR puts it under a PREFIX of
+and exits with status 77. \fB./install.sh install\fR puts it under a PREFIX of
 yours, as the command xymonapi-rag.
 
 .SH SECURITY
@@ -135,12 +135,12 @@ sends nothing, and search and ask take the API's socket by default, with
 no token (xymonapi(8), XYMONAPI_SOCKET).
 .IP "\fBXYMONAPI_PYTHON\fR"
 The Python to run with. Unset, the python3 of the virtualenv beside the
-plugins, $PREFIX/libexec/xymon-plugins/venv, which \fB./install.sh venv-tools\fR
+plugins, $PREFIX/libexec/xymon-plugins/venv, which \fB./install.sh venv\fR
 makes, when there is one; else the first of python3, python3.14 down to
 python3.9, found on PATH. Nothing is
 asked; a command that needs a module that Python lacks says which, and that
-\fB./install.sh venv-tools\fR installs it. On the server, $XYMONHOME/ext/venv,
-from \fB./install.sh venv-server\fR.
+\fB./install.sh venv\fR installs it. On the server, $XYMONHOME/ext/venv,
+from \fB./install.sh venv\fR.
 
 .SH "SEE ALSO"
 xymonapi(8), xymonapi-connect(1), xymonapi-mcp(1), xymoncmd(1)

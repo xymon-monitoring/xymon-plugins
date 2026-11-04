@@ -254,7 +254,7 @@ paths:
       security: [ {} ]
       responses:
         "200":
-          description: "A gzipped tar rooted at xymon-plugins/, laid out as the repository is: plugins/NAME for each plugin staged here, without its tests, with install.sh and LICENSE. ./install.sh install-tools NAME installs that plugin."
+          description: "A gzipped tar rooted at xymon-plugins/, laid out as the repository is: plugins/NAME for each plugin staged here, without its tests, with install.sh and LICENSE. ./install.sh install NAME installs that plugin."
           content:
             application/gzip: { schema: { type: string, format: binary } }
         "404": { $ref: "#/components/responses/NotFound" }
