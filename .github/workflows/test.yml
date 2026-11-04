@@ -105,6 +105,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    # One at a time: two pushes a minute apart start two runs, and the
+    # second's job fetched stable, found it behind, and pushed after the
+    # first had moved it -- rejected, "cannot lock ref", and stable left
+    # behind the newer green commit. Queued instead, each sees what the one
+    # before it did; none is cancelled, since the ancestor checks below
+    # already make a late run a no-op.
+    concurrency:
+      group: stable
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
         with:
