@@ -52,9 +52,15 @@ bash "$tree/tests/buildsystem/$(basename "$check")" > "$work/report" 2>&1 || rc=
 
 # The report gives each violation as "  [RULE] FILE:LINE" and its reason on the
 # next, indented line. Keep those of every rule but interpreter, with each
-# file named as it is in this repository.
+# file named as it is in this repository. The make-tree rules exempt Xymon's
+# tests/lib/assert.sh by its name, the one file where its helpers read the
+# make tree on purpose; its copy here goes by another name, so it is exempted
+# from them the same way, and from nothing else.
 awk '
-	/^  \[[a-z-]+\] / { keep = ($1 != "[interpreter]"); if (keep) print; next }
+	/^  \[[a-z-]+\] / {
+		keep = ($1 != "[interpreter]") && !($1 ~ /^\[make-tree-/ && $2 ~ /^tests\/lib\/assert-xymon\.sh:/)
+		if (keep) print; next
+	}
 	/^      / { if (keep) print; next }
 	{ keep = 0 }
 ' "$work/report" | sed -e 's|tests/plugins/\([^/]*\)/|plugins/\1/tests/|' -e 's|tests/install-sh-under-check\.sh|install.sh|' > "$work/violations"
