@@ -8,6 +8,7 @@
 #   ./install.sh install-tools [PLUGIN...]       on your own machine, under PREFIX (~/.local)
 #   ./install.sh enable-server|disable-server [PLUGIN...]  a server task on or off
 #   ./install.sh uninstall-server|uninstall-tools [PLUGIN...]
+#   ./install.sh status-server|status-tools [PLUGIN...]  what is installed, and on
 #   ./install.sh venv-server|venv-tools          the virtualenv beside the plugins
 #
 # The server actions are also spelt without -server, their names before the
@@ -43,7 +44,7 @@ ROOT=$(cd "$(dirname "$0")" && pwd)
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 usage() {
-	echo "usage: ./install.sh install-server|install-tools|enable-server|disable-server|uninstall-server|uninstall-tools|venv-server|venv-tools [--force] [PLUGIN...] [NAME=value...]" >&2
+	echo "usage: ./install.sh install-server|install-tools|enable-server|disable-server|status-server|status-tools|uninstall-server|uninstall-tools|venv-server|venv-tools [--force] [PLUGIN...] [NAME=value...]" >&2
 	exit 2
 }
 
@@ -290,6 +291,28 @@ disable() {
 	echo "$1 is off: xymonlaunch stops it within half a minute"
 }
 
+# status SIDE ROOT PLUGIN -- one line for the plugin on that side: the
+# version installed, from its VERSION -- a release tag, NAME/vX.Y.Z, read as
+# its X.Y.Z -- or that it is not; on the server, whether its task is on; and
+# the version in this checkout, with "newer" when it is. A plugin that has
+# nothing on that side says nothing.
+status() {
+	[ -n "$(field "$3" "$1-files")" ] || return 0
+	here=$(field "$3" version)
+	if [ ! -f "$2/$3/VERSION" ]; then
+		echo "$3: not installed; this checkout has $here"
+		return 0
+	fi
+	v=$(sed -e 's|^.*/v||' "$2/$3/VERSION")
+	state=
+	if [ "$1" = server ] && [ -n "$(field "$3" task)" ]; then
+		if [ -L "$TASKDIR/$3" ]; then state=", on"; else state=", off"; fi
+	fi
+	newer=
+	older "$v" "$here" && newer=", newer"
+	echo "$3: $v installed$state; this checkout has $here$newer"
+}
+
 # installed_tasks -- the plugins named, or every one installed with a task.
 installed_tasks() {
 	for n in $LIST; do
@@ -506,6 +529,11 @@ case $ACTION in
 	disable|disable-server)
 		need_home
 		for n in $(installed_tasks); do disable "$n"; done ;;
+	status|status-server)
+		need_home
+		for n in $LIST; do status server "$EXTROOT" "$n"; done ;;
+	status-tools)
+		for n in $LIST; do status tools "$TOOLSROOT" "$n"; done ;;
 	uninstall|uninstall-server)
 		need_home
 		for n in $(deepest_first); do uninstall_server "$n"; done

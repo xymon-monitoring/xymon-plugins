@@ -60,7 +60,8 @@ move and how a change is made is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ## Conventions
 
 - **Install actions** name the side: `install-server`, `enable-server`,
-  `disable-server`, `uninstall-server`, `venv-server` on the Xymon server; `install-tools`, `uninstall-tools`,
+  `disable-server`, `status-server`, `uninstall-server`, `venv-server` on the
+  Xymon server; `install-tools`, `status-tools`, `uninstall-tools`,
   `venv-tools` on your own machine. `install-client` is refused, naming
   `install-tools`: a client is Xymon's, on a monitored host, and the action
   of that name arrives with the first check that installs there.

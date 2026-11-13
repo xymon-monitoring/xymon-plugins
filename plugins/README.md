@@ -90,8 +90,11 @@ file of its own, as `sed -i` does, it moves that file into `ext/NAME` and
 puts the link back. A task an older install wrote with a
 `DISABLED` line is off, and that line is taken out.
 
-**Updating.** Run the same install again, from an updated checkout or a
-fresh `/plugins` download. The server install replaces the plugin's code and
+**Updating.** `XYMONHOME=... ./install.sh status-server`, or
+`./install.sh status-tools`, says what is installed, at which version,
+whether its task is on, and whether the checkout it runs from is newer. Run
+the same install again, from an updated checkout or a fresh `/plugins`
+download. The server install replaces the plugin's code and
 keeps your task file, snippets and settings. A task that runs on keeps the
 code it loaded: the API's install stops the API, saying so, and xymonlaunch
 starts the new; a task that runs from time to time, as the index, takes the

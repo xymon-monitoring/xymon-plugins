@@ -138,6 +138,15 @@ so when there is nothing to do. The task file carries no `DISABLED`: one an
 older install wrote with that line is off, and the line is taken out, and
 the install says how to turn it on.
 
+### Knowing what is installed
+
+**S15. `status` says what is installed.**
+`status-server` and `status-tools` say, for each plugin of the side, or
+those named: whether it is installed, the version installed, from its
+`VERSION`, a release tag read as its `X.Y.Z`; on the server, whether its
+task is on; and the version of the checkout run from, marked newer when it
+is. A name that is no plugin is refused. `status` changes nothing.
+
 ### Getting the code
 
 **S11. `stable` is code every test passed.**
@@ -172,9 +181,6 @@ brings its test.
   does not run on a terminal, so that a script never acts on a side it did
   not name. Run with no verb on a terminal, it asks what to do. It is POSIX
   `sh` and needs no `make`.
-- **`status` says what is installed.** For each plugin of a side: whether it
-  is installed, its version from `VERSION`, whether it is on, and, against a
-  checkout, whether a newer version is there.
 - **A monitored host is a side.** `client-*` lines: a task the Xymon client
   starts from `clientlaunch.d`, linked as on the server. The checks under
   `checks/`, copied into place by hand today, each move under `plugins/`
