@@ -49,7 +49,7 @@ Xymon's, on a monitored host, and nothing installs one there yet.
 
 | side | where, as whom | command | puts |
 |---|---|---|---|
-| the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `$XYMONHOME/etc/tasks.d/`, written `DISABLED`, its manual page under `MANDIR` (`/usr/share/man`) |
+| the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `ext/NAME/tasks.cfg`, written `DISABLED` and linked from `$XYMONHOME/etc/tasks.d/NAME`, its manual page under `MANDIR` (`/usr/share/man`) |
 | your own machine | any machine that reads the API, the server included, as yourself | `./install.sh install-tools NAME` | the code in `$PREFIX/libexec/xymon-plugins/NAME/`, its command in `$PREFIX/bin`, its manual page in `$PREFIX/share/man/man1`; `PREFIX` is `~/.local` |
 
 A plugin that needs another installs it first, so one command is enough,
@@ -78,7 +78,8 @@ virtualenv, else with the `python3` on PATH, asking nothing; a command that
 then needs a module it lacks says which, and what installs it.
 
 **Enabling.** A server task is installed `DISABLED`, so that installing
-changes nothing until you remove that line from its file; xymonlaunch
+changes nothing until you remove that line from its file,
+`ext/NAME/tasks.cfg` -- or `etc/tasks.d/NAME`, the link to it; xymonlaunch
 notices and starts it. A later install leaves the task file as you left
 it.
 
@@ -93,3 +94,8 @@ new code at its next run.
 `./install.sh uninstall-tools NAME` removes that plugin alone, and refuses
 while another installed plugin needs it, naming it; with no `NAME`, every
 plugin of the side and the virtualenv beside them. Each says what it keeps.
+On the server, removing `$XYMONHOME/ext/NAME` by hand also removes the
+plugin's task: xymonlaunch skips the link in `tasks.d` that now points
+nowhere and stops the task at its next reload, within half a minute, with
+nothing in its log. The link, the manual page and the copy served at
+`/plugins` stay until `uninstall-server NAME`.
