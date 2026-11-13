@@ -152,6 +152,110 @@ def entities() -> list[dict]:
     return list(seen.values())
 
 
+# --- Pages -------------------------------------------------------------------
+# The layout of the web pages -- which page a host is on, in which group,
+# with which columns -- is in hosts.cfg and nowhere else: xymond keeps a
+# host's page, not the groups. xymond's own "config hosts.cfg" gives the
+# file with its includes followed, as xymongen reads it, on every Xymon
+# since 4.2.
+_QUOTED = re.compile(r'"([^"]*)"|(\S+)')
+_HOSTLINE = re.compile(r"([0-9A-Fa-f:.]+)\s+(\S+)\s*(?:#\s*(.*))?")
+_TAG = re.compile(r'(NAME|COMMENT|DESCR):(?:"([^"]*)"|(\S*))')
+
+
+def _page(name: str, title: str | None, path: str) -> dict:
+    return {"name": name, "title": title, "path": path, "groups": [], "pages": []}
+
+
+def _columns(spec: str) -> list[str]:
+    return [c for c in spec.split("|") if c]
+
+
+def pages() -> dict:
+    """The page tree of hosts.cfg: {"root": Page, "hosts": {name: {...}}}.
+
+    A Page is {"name", "title", "path", "groups": [...], "pages": [...]};
+    the root is the top page, with name and path "". A group is {"title",
+    "hosts": [...]} with "only" or "except", a list of columns, for
+    group-only and group-except, and "pretitle" for a title line above it.
+    The hosts a page lists before any group are a group with no title.
+    A host with the nodisp tag is on no page.
+
+    It is read as xymongen reads it (xymongen/loadlayout.c in Xymon): a
+    title line is the pretitle of the page, group or host after it; a
+    subpage before any page, and a subparent whose parent is no page seen
+    yet, are ignored, the hosts after them staying where they were; a
+    subparent's parent is the first page of that name."""
+    root = _page("", None, "")
+    by_name: dict[str, dict] = {}
+    hosts: dict[str, dict] = {}
+    page, top, group, pretitle = root, None, None, None
+
+    def child(parent: dict, name: str, title: str | None) -> dict:
+        nonlocal pretitle
+        p = _page(name, title or None, f"{parent['path']}/{name}" if parent["path"] else name)
+        if pretitle:
+            p["pretitle"], pretitle = pretitle, None
+        parent["pages"].append(p)
+        by_name.setdefault(name, p)
+        return p
+
+    for raw in query("config hosts.cfg").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        word, _, rest = line.partition(" ")
+        if "\t" in word:
+            word, _, rest = line.partition("\t")
+        rest = rest.strip()
+        if word in ("page", "vpage"):
+            name, _, title = rest.partition(" ")
+            page = top = child(root, name, title.strip())
+            group = None
+        elif word in ("subpage", "vsubpage"):
+            if top is None:
+                continue                # no page yet: xymongen ignores it
+            name, _, title = rest.partition(" ")
+            page = child(top, name, title.strip())
+            group = None
+        elif word in ("subparent", "vsubparent"):
+            parent, _, more = rest.partition(" ")
+            if parent not in by_name:
+                continue                # no such page yet: xymongen ignores it
+            name, _, title = more.strip().partition(" ")
+            page = child(by_name[parent], name, title.strip())
+            group = None
+        elif word == "title":
+            pretitle = rest
+        elif word.startswith("group"):
+            group = {"title": None, "hosts": []}
+            if word.endswith("-only") or word.endswith("-except"):
+                cols, _, rest = rest.partition(" ")
+                group["only" if word.endswith("-only") else "except"] = _columns(cols)
+            group["title"] = rest.strip() or None
+            if pretitle:
+                group["pretitle"], pretitle = pretitle, None
+            page["groups"].append(group)
+        else:
+            m = _HOSTLINE.fullmatch(line)
+            if not m or m.group(2).startswith(".") or not _NAME.fullmatch(m.group(2)):
+                continue                # include, dispinclude, a .default. line, anything else
+            host, tags = m.group(2), m.group(3) or ""
+            words = {a or b for a, b in _QUOTED.findall(_TAG.sub("", tags))}
+            info = hosts.setdefault(host, {})
+            for key, quoted, bare in _TAG.findall(tags):
+                info[{"NAME": "name", "COMMENT": "comment", "DESCR": "description"}[key]] = quoted or bare
+            if "nodisp" in words or "NODISP" in words:
+                continue
+            if pretitle:
+                info["pretitle"], pretitle = pretitle, None
+            if group is None:
+                group = {"title": None, "hosts": []}
+                page["groups"].append(group)
+            group["hosts"].append(host)
+    return {"root": root, "hosts": hosts}
+
+
 _STATUS_FIELDS = ["hostname", "testname", "color", "lastchange", "logtime",
                   "acktime", "disabletime", "ackmsg", "dismsg", "msg"]
 _STATUS_MAX = 1024 * 1024

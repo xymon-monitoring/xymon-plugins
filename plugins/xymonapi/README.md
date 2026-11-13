@@ -16,6 +16,7 @@ Its operations, under `/xymon/api/v1`, all GET but for `/tokens`:
 |---|---|
 | `/health` | whether xymond answers, its version, the search index, this API's version |
 | `/states`, `/alarms`, `/entities` | the board, what is not ok, the hosts |
+| `/pages` | the pages and groups of hosts.cfg, with the hosts in each |
 | `/status` | one test's current status, text and acknowledgement included |
 | `/series`, `/graphs` | the values of one RRD dataset; the PNG showgraph draws |
 | `/events`, `/histlog` | the colour changes, newest first; the status text saved at one |

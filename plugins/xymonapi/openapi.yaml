@@ -122,6 +122,33 @@ paths:
                   items: { type: array, items: { $ref: "#/components/schemas/Entity" } }
         "502": { $ref: "#/components/responses/Upstream" }
 
+  /pages:
+    get:
+      summary: The pages of hosts.cfg, with their groups and the hosts in each.
+      operationId: listPages
+      responses:
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "200":
+          description: The top page, with its subpages inside it, and what hosts.cfg says of each host.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [root, hosts]
+                properties:
+                  root: { $ref: "#/components/schemas/Page" }
+                  hosts:
+                    type: object
+                    description: "By host name: what hosts.cfg names it."
+                    additionalProperties:
+                      type: object
+                      properties:
+                        name:        { type: string, description: "The NAME tag: what the pages show instead of the host name." }
+                        comment:     { type: string, description: "The COMMENT tag." }
+                        description: { type: string, description: "The DESCR tag." }
+                        pretitle:    { type: string, description: "The title line above the host in hosts.cfg: a heading inside its group." }
+        "502": { $ref: "#/components/responses/Upstream" }
+
   /status:
     get:
       summary: The current status of one host's test, text included.
@@ -431,6 +458,27 @@ components:
         test:    { type: string }
         verdict: { $ref: "#/components/schemas/Status" }
         time:    { type: string, format: date-time, description: "When the verdict last changed." }
+
+    Page:
+      type: object
+      required: [name, path, groups, pages]
+      properties:
+        name:     { type: string, description: "As hosts.cfg names it; empty for the top page." }
+        title:    { type: string, nullable: true }
+        path:     { type: string, description: "The names from the top page down, joined by /; empty for the top page." }
+        pretitle: { type: string, description: "The title line above it in hosts.cfg." }
+        groups:   { type: array, items: { $ref: "#/components/schemas/Group" } }
+        pages:    { type: array, items: { $ref: "#/components/schemas/Page" } }
+
+    Group:
+      type: object
+      required: [hosts]
+      properties:
+        title:    { type: string, nullable: true, description: "Null for the hosts a page lists before any group." }
+        pretitle: { type: string, description: "The title line above it in hosts.cfg." }
+        only:     { type: array, items: { type: string }, description: "group-only: the columns shown, in this order." }
+        except:   { type: array, items: { type: string }, description: "group-except: the columns left out." }
+        hosts:    { type: array, items: { type: string }, description: "In the order of hosts.cfg." }
 
     Alarm:
       type: object
