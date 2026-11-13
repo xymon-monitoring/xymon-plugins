@@ -33,10 +33,10 @@ $XYMONAPI_RAG_INDEX. A passage the index holds already keeps its vector, and
 a change it holds has its text not fetched again, so a run that adds a
 day's changes takes seconds; \fB--full\fR embeds everything again. Run it
 to take in what has changed: the task \fBtasks.d/xymonapi-rag\fR, which
-the install writes DISABLED, does so once a day, and
+installed off, does so once a day, and
 .I xymonapi(8)
-reads the new index at once. To run it, remove that line and put
-XYMONAPI_RAG_DOCS in a file under xymonserver.d/. When
+reads the new index at once. To run it, put XYMONAPI_RAG_DOCS in a file
+under xymonserver.d/ and run \fB./install.sh enable-server xymonapi-rag\fR. When
 the history cannot be read -- a saved status refused for another reason than
 one that was not saved -- it stops and leaves the index as it was. Through
 the API, one that does not answer yet, as when both are started by the same

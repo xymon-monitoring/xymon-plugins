@@ -5,6 +5,16 @@ its version, what breaks, and what to do. Every other change needs nothing
 but installing the new code (see each plugin's README). CI refuses a change
 that breaks the API's contract without a line here.
 
+## Server tasks on and off, by a link, from xymonapi 2.4.0
+
+A plugin's task is no longer turned on by removing `DISABLED` from its
+file: it is on when `etc/tasks.d/NAME` links to `ext/NAME/tasks.cfg`, which
+`XYMONHOME=... ./install.sh enable-server NAME` makes and `disable-server
+NAME` removes. The first install with this version keeps each task as it
+was: one still `DISABLED` stays off and loses that line, and says how to
+turn it on; one you enabled stays on. A script that enabled a task by
+editing its file runs `enable-server` instead.
+
 ## The install actions, from xymonapi 2.3.0
 
 `./install.sh install-client`, `uninstall-client` and `venv-client` are now

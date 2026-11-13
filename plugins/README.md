@@ -50,7 +50,7 @@ Xymon's, on a monitored host, and nothing installs one there yet.
 
 | side | where, as whom | command | puts |
 |---|---|---|---|
-| the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `ext/NAME/tasks.cfg`, written `DISABLED` and linked from `$XYMONHOME/etc/tasks.d/NAME`, its manual page under `MANDIR` (`/usr/share/man`) |
+| the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `ext/NAME/tasks.cfg`, off until enabled, its manual page under `MANDIR` (`/usr/share/man`) |
 | your own machine | any machine that reads the API, the server included, as yourself | `./install.sh install-tools NAME` | the code in `$PREFIX/libexec/xymon-plugins/NAME/`, its command in `$PREFIX/bin`, its manual page in `$PREFIX/share/man/man1`; `PREFIX` is `~/.local` |
 
 A plugin that needs another installs it first, so one command is enough,
@@ -78,12 +78,15 @@ launchers run with `XYMONAPI_PYTHON` when it is set, else with that
 virtualenv, else with the `python3` on PATH, asking nothing; a command that
 then needs a module it lacks says which, and what installs it.
 
-**Enabling.** A server task is installed `DISABLED`, so that installing
-changes nothing until you remove that line from its file,
-`ext/NAME/tasks.cfg` -- or `etc/tasks.d/NAME`, the link to it; xymonlaunch
-notices and starts it. A later install leaves the task file as you left
-it, and where an editor replaced the link by a file of its own, as
-`sed -i` does, moves that file into `ext/NAME` and puts the link back.
+**Enabling.** A server task is installed off, so that installing changes
+nothing until `XYMONHOME=... ./install.sh enable-server NAME`, which links
+`etc/tasks.d/NAME` to the task file, `ext/NAME/tasks.cfg`; xymonlaunch
+notices and starts it within half a minute. `disable-server NAME` removes the
+link, and xymonlaunch stops the task. A later install keeps the task file as
+you left it, and whether it is on; where an editor replaced the link by a
+file of its own, as `sed -i` does, it moves that file into `ext/NAME` and
+puts the link back. A task an older install wrote with a
+`DISABLED` line is off, and that line is taken out.
 
 **Updating.** Run the same install again, from an updated checkout or a
 fresh `/plugins` download. The server install replaces the plugin's code and

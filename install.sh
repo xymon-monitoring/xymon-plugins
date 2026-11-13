@@ -6,6 +6,7 @@
 #
 #   XYMONHOME=/usr/lib/xymon/server ./install.sh install-server [PLUGIN...]  on the Xymon server
 #   ./install.sh install-tools [PLUGIN...]       on your own machine, under PREFIX (~/.local)
+#   ./install.sh enable-server|disable-server [PLUGIN...]  a server task on or off
 #   ./install.sh uninstall-server|uninstall-tools [PLUGIN...]
 #   ./install.sh venv-server|venv-tools          the virtualenv beside the plugins
 #
@@ -16,9 +17,11 @@
 #
 # With no PLUGIN, every plugin of that side. A plugin that needs another
 # installs it first, and an uninstall is refused while one installed needs
-# the plugin removed. Running an install again updates: each plugin's
-# directory is replaced as a whole, and the admin's task files, web server
-# snippets and data are kept. Settings come from the environment, or as
+# the plugin removed. An install starts nothing: a server task is on when
+# tasks.d/PLUGIN, a link to it, is there, which enable-server makes and
+# disable-server removes. Running an install again updates: each plugin's
+# directory is replaced as a whole, and the admin's task files, whether each
+# is on, web server snippets and data are kept. Settings come from the environment, or as
 # NAME=value arguments: XYMONHOME, PREFIX, MANDIR (/usr/share/man), DESTDIR,
 # which stages either side for a package, and PYTHON, the Python a
 # virtualenv is made with.
@@ -36,7 +39,7 @@ ROOT=$(cd "$(dirname "$0")" && pwd)
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 usage() {
-	echo "usage: ./install.sh install-server|install-tools|uninstall-server|uninstall-tools|venv-server|venv-tools [PLUGIN...] [NAME=value...]" >&2
+	echo "usage: ./install.sh install-server|install-tools|enable-server|disable-server|uninstall-server|uninstall-tools|venv-server|venv-tools [PLUGIN...] [NAME=value...]" >&2
 	exit 2
 }
 
@@ -160,45 +163,79 @@ dist() {
 	cp -f "$ROOT/install.sh" "$ROOT/LICENSE" "$DIST/"
 }
 
-# task PLUGIN -- its xymonlaunch task file, @XYMONHOME@ replaced, kept in
-# the plugin's directory as ext/PLUGIN/tasks.cfg and linked from
-# tasks.d/PLUGIN: removing ext/PLUGIN by hand then takes the task with it,
-# since xymonlaunch skips a link that points nowhere and stops the task at
-# its next reload, where a copy in tasks.d would have it log that it cannot
-# start the task, forever. The file an admin enabled is not put back to
-# DISABLED by the next install: install_server sets it aside before it
-# replaces the directory. A regular file at tasks.d/PLUGIN is moved into
-# the directory instead, and wins over the one set aside, because it is the
-# one xymonlaunch was reading: the copy an older install made there, or
-# what an editor that writes by renaming, "sed -i" among them, left where
-# the link was. A link to anything else at tasks.d/PLUGIN is left alone:
-# taskcheck refuses it before anything is replaced.
-taskcheck() {
-	[ -n "$(field "$1" task)" ] || return 0
-	link=$TASKDIR/$1
-	dest=$XYMONHOME/ext/$1/tasks.cfg
-	if [ -L "$link" ] && [ "$(readlink "$link")" != "$dest" ]; then
-		die "$link is a link to $(readlink "$link"), not $1's task: left alone"
+# ours PLUGIN -- refuse a tasks.d/PLUGIN that is a link to something other
+# than the plugin's task file: it is not ours to change.
+ours() {
+	if [ -L "$TASKDIR/$1" ] && [ "$(readlink "$TASKDIR/$1")" != "$XYMONHOME/ext/$1/tasks.cfg" ]; then
+		die "$TASKDIR/$1 is a link to $(readlink "$TASKDIR/$1"), not $1's task: left alone"
 	fi
 }
 
+# task PLUGIN -- its xymonlaunch task file, @XYMONHOME@ replaced, kept in
+# the plugin's directory as ext/PLUGIN/tasks.cfg. The task is on when
+# tasks.d/PLUGIN, a link to that file, is there: removing ext/PLUGIN by hand
+# then takes the task with it, since xymonlaunch skips a link that points
+# nowhere and stops the task at its next reload, where a copy in tasks.d
+# would have it log that it cannot start the task, forever. A first install
+# makes no link. A later one keeps the task file as the admin left it --
+# install_server sets it aside before it replaces the directory -- and
+# whether the task is on. A regular file at tasks.d/PLUGIN wins over the
+# one set aside, as it is the one xymonlaunch was reading: the copy an older
+# install made there, or what an editor that writes by renaming, "sed -i"
+# among them, left where the link was. It is moved into the directory, and
+# linked. Older installs said off with a DISABLED line in the file: a file
+# with one is off, its line taken out and its link removed.
 task() {
 	t=$(field "$1" task); [ -n "$t" ] || return 0
 	tf=$EXTROOT/$1/tasks.cfg
 	link=$TASKDIR/$1
-	dest=$XYMONHOME/ext/$1/tasks.cfg
+	ours "$1"
 	mkdir -p "$TASKDIR"
+	on=
 	if [ -f "$link" ] && [ ! -L "$link" ]; then
+		on=1
 		rm -f "$EXTROOT/.$1.tasks.cfg"
 		mv "$link" "$tf" || exit 1
 		echo "keeping $link, moved to $tf"
 	elif [ -f "$EXTROOT/.$1.tasks.cfg" ]; then
+		[ -L "$link" ] && on=1
 		mv "$EXTROOT/.$1.tasks.cfg" "$tf" || exit 1
 		echo "keeping $tf"
 	else
 		sed -e "s|@XYMONHOME@|$(sedesc "$XYMONHOME")|g" "$ROOT/plugins/$1/$t" > "$tf" && chmod 644 "$tf"
 	fi
-	[ -L "$link" ] || ln -s "$dest" "$link" || exit 1
+	if grep -q '^[[:space:]]*DISABLED[[:space:]]*$' "$tf"; then
+		on=
+		sed -e '/^[[:space:]]*DISABLED[[:space:]]*$/d' "$tf" > "$tf.new" && mv "$tf.new" "$tf" && chmod 644 "$tf" || exit 1
+		echo "$1's task was DISABLED: it is off, and ./install.sh enable-server $1 turns it on"
+	fi
+	rm -f "$link"
+	[ -z "$on" ] || ln -s "$XYMONHOME/ext/$1/tasks.cfg" "$link" || exit 1
+}
+
+# enable PLUGIN, disable PLUGIN -- its task on or off, by its link.
+enable() {
+	[ -n "$(field "$1" task)" ] || die "$1 has no task to enable"
+	[ -f "$EXTROOT/$1/tasks.cfg" ] || die "$1 is not installed in $EXTROOT"
+	ours "$1"
+	[ -L "$TASKDIR/$1" ] && { echo "$1 is on already"; return 0; }
+	mkdir -p "$TASKDIR"
+	ln -s "$XYMONHOME/ext/$1/tasks.cfg" "$TASKDIR/$1" || exit 1
+	echo "$1 is on: xymonlaunch starts it within half a minute"
+}
+disable() {
+	[ -n "$(field "$1" task)" ] || die "$1 has no task to disable"
+	ours "$1"
+	[ -L "$TASKDIR/$1" ] || { echo "$1 is off already"; return 0; }
+	rm -f "$TASKDIR/$1"
+	echo "$1 is off: xymonlaunch stops it within half a minute"
+}
+
+# installed_tasks -- the plugins named, or every one installed with a task.
+installed_tasks() {
+	for n in $LIST; do
+		if [ -n "$NAMES" ] || { [ -n "$(field "$n" task)" ] && [ -d "$EXTROOT/$n" ]; }; then echo "$n"; fi
+	done
 }
 
 # conf PLUGIN -- its web server snippets into $XYMONHOME/etc unless there
@@ -316,7 +353,8 @@ install_server() {
 	for n in $(field "$1" needs); do install_server "$n"; done
 	[ -n "$(field "$1" server-files)" ] || die "$1 has nothing to install on the server"
 	ext=$EXTROOT/$1
-	taskcheck "$1"
+	# Refused before anything is replaced, not halfway through.
+	[ -z "$(field "$1" task)" ] || ours "$1"
 	# The task file an admin may have enabled outlives the directory.
 	if [ -f "$ext/tasks.cfg" ]; then mv "$ext/tasks.cfg" "$EXTROOT/.$1.tasks.cfg" || exit 1; fi
 	fresh "$ext" || exit 1
@@ -401,6 +439,12 @@ case $ACTION in
 		for n in $LIST; do install_server "$n"; done ;;
 	install-tools)
 		for n in $LIST; do install_tools "$n"; done ;;
+	enable|enable-server)
+		need_home
+		for n in $(installed_tasks); do enable "$n"; done ;;
+	disable|disable-server)
+		need_home
+		for n in $(installed_tasks); do disable "$n"; done ;;
 	uninstall|uninstall-server)
 		need_home
 		for n in $(deepest_first); do uninstall_server "$n"; done

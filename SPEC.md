@@ -79,21 +79,23 @@ server side needs `XYMONHOME`, and without it installs nothing and says so.
 ### Installing, updating, removing
 
 **S5. Installing enables nothing.**
-A plugin's task is installed `DISABLED`; the install says how to enable it.
+A plugin's task is installed off, with no link (S13); the install says how
+to turn it on.
 
 **S6. A plugin's task lives in its directory.**
-It is `ext/NAME/tasks.cfg`, and `etc/tasks.d/NAME` is a link to it; under
-`DESTDIR` the link names the installed file. A regular file at
+It is `ext/NAME/tasks.cfg`, and `etc/tasks.d/NAME`, when there, is a link to
+it; under `DESTDIR` the link names the installed file. A regular file at
 `tasks.d/NAME` -- a copy an older install made, or the file an editor left
 in place of the link -- is the one xymonlaunch reads: it is moved into the
-plugin's directory as it was, and replaced by the link. A link at
-`tasks.d/NAME` to something else is left as it is, and the install refused
-before it installs anything.
+plugin's directory as it was, and linked unless it was `DISABLED`. A link
+at `tasks.d/NAME` to something else is left as it is, and the install,
+before it installs anything, `enable-server` and `disable-server` refused.
 
 **S7. An update replaces the code and keeps the choices.**
 Installing again replaces the plugin's directory as a whole, so a file a
-newer version no longer ships is gone; it keeps the task file the
-administrator enabled, and a web server snippet once written.
+newer version no longer ships is gone; it keeps the task file as the
+administrator left it, whether it is on, and a web server snippet once
+written.
 
 **S8. Removing takes away the plugin and its links.**
 The removal takes away the plugin's directory, its task link and its manual
@@ -107,6 +109,14 @@ link away.
 **S10. The administrator's data outlives the plugin.**
 The removal keeps the web server snippets and the API's tokens file, and
 says what it kept and how to remove it.
+
+**S13. A plugin is on when its link is there.**
+A plugin's task is on when `etc/tasks.d/NAME` links to its task file, and
+off when the link is absent: xymonlaunch has the task exactly then.
+`enable-server` makes the link, `disable-server` removes it, and each says
+so when there is nothing to do. The task file carries no `DISABLED`: one an
+older install wrote with that line is off, and the line is taken out, and
+the install says how to turn it on.
 
 ### Getting the code
 
@@ -150,11 +160,6 @@ brings its test.
   warning that it could not be checked; a development version, `4.3.32-dev`,
   counts as the release it leads to. A plugin that needs a newer Xymon for
   one feature alone says so in its README instead.
-- **A plugin is on when its link is there.** A plugin's task is on when
-  `etc/tasks.d/NAME` exists, and off when it is absent; `enable` makes the
-  link, `disable` removes it, and the task file no longer carries
-  `DISABLED`. An installation where it does is moved to the link by the next
-  install.
 - **`status` says what is installed.** For each plugin of a side: whether it
   is installed, its version from `VERSION`, whether it is on, and, against a
   checkout, whether a newer version is there.

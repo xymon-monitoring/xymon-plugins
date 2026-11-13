@@ -1,9 +1,8 @@
 # The Xymon API, xymonapi(8): a read-only HTTP and JSON view of this server.
-# Disabled as shipped, since it needs Python 3.9; remove DISABLED to run it.
+# Off once installed, since it needs Python 3.9: ./install.sh enable-server xymonapi.
 # Its own settings, listed in xymonapi(8) under ENVIRONMENT, go in a file
 # under xymonserver.d/.
 [xymonapi]
-	DISABLED
 	ENVFILE @XYMONHOME@/etc/xymonserver.cfg
 	NEEDS xymond
 	CMD $XYMONHOME/ext/xymonapi/xymonapi.sh
