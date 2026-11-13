@@ -1,4 +1,4 @@
-.TH XYMONAPI 8 "October 30, 2026" "xymon-plugins"
+.TH XYMONAPI 8 "November 13, 2026" "xymon-plugins"
 .SH NAME
 xymonapi \- read-only HTTP and JSON interface to the Xymon server
 .SH SYNOPSIS
@@ -13,8 +13,9 @@ It changes nothing in Xymon: it only reads.
 
 It is optional, and shipped disabled. It is started by
 .I xymonlaunch(8)
-from the task file \fBtasks.d/xymonapi\fR beside tasks.cfg, which its
-installation creates with a DISABLED line. To run it, remove that line;
+from the task file \fBext/xymonapi/tasks.cfg\fR, once
+\fB./install.sh enable-server xymonapi\fR has linked it from
+\fBtasks.d/xymonapi\fR beside tasks.cfg; its installation makes no link.
 xymonlaunch starts it once xymond is running, and restarts it if it stops.
 
 It needs a Xymon built from its current main branch: its settings go in
@@ -298,9 +299,9 @@ tokens.py, the server; xymonapi_client.py, the client the other plugins
 read it with; openapi.yaml, the description served at /openapi.json;
 requirements.txt, the Python modules it needs; and VERSION, what /health
 gives.
-.IP "\fB$XYMONHOME/etc/tasks.d/xymonapi\fR"
-The xymonlaunch task, installed with a DISABLED line. A later installation
-leaves it as it is.
+.IP "\fB$XYMONHOME/ext/xymonapi/tasks.cfg\fR"
+The xymonlaunch task, on when \fB$XYMONHOME/etc/tasks.d/xymonapi\fR links to
+it. A later installation leaves it as it is, and whether it is on.
 .IP "\fB$XYMONHOME/etc/xymonapi-apache.conf\fR, \fBxymonapi-nginx.conf\fR, \fBxymonapi-lighttpd.conf\fR"
 Snippets that serve the API through the web server, for other machines:
 /xymon/api/ passed to 127.0.0.1:1986, in the HTTPS part where the server

@@ -29,10 +29,10 @@ setting is in [`xymonapi-rag.1`](xymonapi-rag.1).
 XYMONHOME=/usr/lib/xymon/server ./install.sh install-server xymonapi-rag
 ```
 
-It installs the daily index task, `$XYMONHOME/etc/tasks.d/xymonapi-rag`,
-written `DISABLED`. To enable it, put `XYMONAPI_RAG_DOCS` -- a directory
-with Xymon's manual pages; `/usr/share/man` will do -- in a file under
-`xymonserver.d/`, then remove `DISABLED` from the task. The API's own task
+It installs the daily index task, off. To turn it on, put
+`XYMONAPI_RAG_DOCS` -- a directory with Xymon's manual pages;
+`/usr/share/man` will do -- in a file under `xymonserver.d/`, then run
+`XYMONHOME=... ./install.sh enable-server xymonapi-rag`. The API's own task
 must run too, for the search to be served.
 
 The task reads the history from xymond's own files, as the API does, and

@@ -6,10 +6,10 @@
 # ./install.sh install-server -- install, its older spelling, as well -- puts
 # the API, with its client, in $XYMONHOME/ext/xymonapi/,
 # the search beside it, its manual page in man8/, and its task in
-# $XYMONHOME/ext/xymonapi/tasks.cfg, linked from etc/tasks.d/xymonapi --
-# disabled, with ENVFILE naming that server's xymonserver.cfg. An install over one where the admin enabled the
-# task leaves that file alone: putting DISABLED back would stop the API at
-# the next upgrade, with nothing to say why. Without XYMONHOME it installs
+# $XYMONHOME/ext/xymonapi/tasks.cfg, off -- no link from etc/tasks.d -- with
+# ENVFILE naming that server's xymonserver.cfg. An install over one the admin
+# edited and enabled leaves the file alone and the task on: turning it off
+# would stop the API at the next upgrade, with nothing to say why. Without XYMONHOME it installs
 # nothing and says so. The Apache snippet goes to $XYMONHOME/etc, kept too
 # once there. ./install.sh install-tools puts the MCP server and the search commands
 # under PREFIX, with two commands in bin that run them from there, and
@@ -67,9 +67,10 @@ for p in xymonapi xymonapi-rag; do
 done
 assert_file_exists "$work/man/man8/xymonapi.8"
 
-task=$home/etc/tasks.d/xymonapi
+task=$home/ext/xymonapi/tasks.cfg
 assert_file_exists "$task"
-grep -q '^[[:space:]]*DISABLED$' "$task" || fail "[S5] the task is not shipped DISABLED: $(cat "$task")"
+if [ -e "$home/etc/tasks.d/xymonapi" ] || [ -L "$home/etc/tasks.d/xymonapi" ]; then fail "[S5] the install turned the task on: etc/tasks.d/xymonapi is there"; fi
+grep -q 'DISABLED' "$task" && fail "[S5] the task file carries DISABLED, which the link replaces: $(cat "$task")"
 grep -q "^[[:space:]]*ENVFILE $home/etc/xymonserver.cfg\$" "$task" \
 	|| fail "ENVFILE does not name this server's xymonserver.cfg: $(grep ENVFILE "$task")"
 grep -q '@XYMONHOME@' "$task" && fail "@XYMONHOME@ was left unreplaced in $task"
@@ -91,12 +92,14 @@ assert_not_contains "Stopped" "$(cat "$work/update.log")" "with no API running, 
 assert_not_contains "pkill" "$(cat "$work/update.log")" "and asks no pkill of the admin"
 
 # The admin enables the API, and the next install must not undo it.
-grep -v '^[[:space:]]*DISABLED$' "$task" > "$work/enabled"
-cp "$work/enabled" "$task"
+echo '# mine' >> "$task"
+cp "$task" "$work/enabled"
+"$ROOT/install.sh" enable-server xymonapi XYMONHOME="$home" >/dev/null 2>&1 || fail "enable-server xymonapi failed"
 "$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >"$work/reinstall.log" 2>&1 \
 	|| fail "installing a second time failed: $(tail -n 5 "$work/reinstall.log")"
 cmp -s "$work/enabled" "$task" \
 	|| fail "[S7] a second install changed the task file the admin had enabled: $(cat "$task")"
+[ -L "$home/etc/tasks.d/xymonapi" ] || fail "[S7] a second install turned off the task the admin had enabled"
 
 # A server directory with a space, an & and a | in its name: the paths are
 # quoted, and the replacement sed makes in the task files is escaped.
@@ -105,16 +108,16 @@ odd="$work/x y&z|w"
 	|| fail "install.sh install-server into a directory with a space, & and | failed: $(tail -n 5 "$work/odd.log")"
 assert_file_exists "$odd/ext/xymonapi/xymonapi.sh"
 assert_file_exists "$work/man 2/man8/xymonapi.8"
-grep -qF "ENVFILE $odd/etc/xymonserver.cfg" "$odd/etc/tasks.d/xymonapi" \
-	|| fail "the task file does not name that directory as it is: $(grep ENVFILE "$odd/etc/tasks.d/xymonapi")"
-grep -qF "ENVFILE $odd/etc/xymonserver.cfg" "$odd/etc/tasks.d/xymonapi-rag" \
-	|| fail "the index task file does not name that directory as it is: $(grep ENVFILE "$odd/etc/tasks.d/xymonapi-rag")"
+grep -qF "ENVFILE $odd/etc/xymonserver.cfg" "$odd/ext/xymonapi/tasks.cfg" \
+	|| fail "the task file does not name that directory as it is: $(grep ENVFILE "$odd/ext/xymonapi/tasks.cfg")"
+grep -qF "ENVFILE $odd/etc/xymonserver.cfg" "$odd/ext/xymonapi-rag/tasks.cfg" \
+	|| fail "the index task file does not name that directory as it is: $(grep ENVFILE "$odd/ext/xymonapi-rag/tasks.cfg")"
 
 assert_file_exists "$home/etc/xymonapi-apache.conf"
 grep -q 'ProxyPass ' "$home/etc/xymonapi-apache.conf" || fail "the Apache snippet has no ProxyPass"
 grep -q 'proxy_pass ' "$home/etc/xymonapi-nginx.conf" || fail "the nginx snippet has no proxy_pass"
 grep -q 'proxy.server' "$home/etc/xymonapi-lighttpd.conf" || fail "the lighttpd snippet has no proxy.server"
-assert_contains 'Installed. Enable the API' "$(cat "$work/install.log")" "[S5] the install says what to do next"
+assert_contains 'Installed, off. Turn the API on: ./install.sh enable-server xymonapi' "$(cat "$work/install.log")" "[S5] the install says what to do next"
 echo "# mine" > "$home/etc/xymonapi-apache.conf"
 "$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || fail "a third install failed"
 assert_equal "# mine" "$(cat "$home/etc/xymonapi-apache.conf")" "[S7] an edited Apache snippet is kept"
@@ -208,4 +211,4 @@ for f in bin/xymonapi-mcp bin/xymonapi-rag share/man/man1/xymonapi-mcp.1 share/m
 done
 assert_contains "claude mcp remove" "$(cat "$work/unclient.log")" "uninstall-tools says what register did besides"
 
-pass "./install.sh install-server puts the server plugins in ext/ with disabled tasks and the Apache snippet, keeps what the admin edited, takes odd directory names, replaces each plugin's directory on update; install-tools lays out the client side; uninstall removes them, refusing one another needs"
+pass "./install.sh install-server puts the server plugins in ext/ with tasks off and the Apache snippet, keeps what the admin edited, takes odd directory names, replaces each plugin's directory on update; install-tools lays out the client side; uninstall removes them, refusing one another needs"
