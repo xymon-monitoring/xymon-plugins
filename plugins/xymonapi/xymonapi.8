@@ -18,9 +18,10 @@ from the task file \fBext/xymonapi/tasks.cfg\fR, once
 \fBtasks.d/xymonapi\fR beside tasks.cfg; its installation makes no link.
 xymonlaunch starts it once xymond is running, and restarts it if it stops.
 
-It needs a Xymon built from its current main branch: its settings go in
-xymonserver.d/, which no release of Xymon reads yet. On 4.3.30 a file there
-is ignored, password included, and xymonapi then answers anyone.
+It needs Xymon 4.3.31 or later: its settings go in xymonserver.d/, which
+Xymon reads from 4.3.31. On 4.3.30 a file there is ignored, password
+included, and xymonapi then answers anyone; the installation refuses an
+older Xymon unless given --force.
 
 Unlike the rest of Xymon, xymonapi needs Python 3.9 or later, with the
 modules fastapi, uvicorn and yaml (requirements.txt beside it lists them),

@@ -34,7 +34,7 @@ Three plugins build on the API, and the four are one family:
 
 | plugin | on the Xymon server | on your own machine | needs |
 |---|---|---|---|
-| `xymonapi` | the API, as one of xymonlaunch's tasks | `xymonapi-connect`, which gets this machine a token, and the client library the other plugins use | xymon >= 4.3.31 (main) on the server; python >= 3.9 |
+| `xymonapi` | the API, as one of xymonlaunch's tasks | `xymonapi-connect`, which gets this machine a token, and the client library the other plugins use | xymon >= 4.3.31 on the server; python >= 3.9 |
 | [`xymonapi-mcp`](../xymonapi-mcp/README.md) | nothing runs: the plugin is staged for `/plugins` | an MCP server that gives an AI tool read-only tools over the API | xymonapi >= 0.1.0 beside it; the API's socket on the server, or the API over the network; python >= 3.9 |
 | [`xymonapi-rag`](../xymonapi-rag/README.md) | the daily index of Xymon's manual pages and history, served at `/search` | `xymonapi-rag search` and `ask`: the same search, by meaning, from anywhere | xymonapi >= 0.1.0 beside it; python >= 3.9; a language model only for `ask` |
 | [`xymonapi-agent`](../xymonapi-agent/README.md) | `/ask`: the API answers a question in words, off by default | `xymonapi-agent`: one command that asks an AI CLI -- Claude Code, Codex or opencode, headless -- with the MCP server as its only tool | xymonapi-mcp >= 0.1.0 beside it; one of the AI CLIs, installed and logged in; python >= 3.9 |
@@ -73,9 +73,10 @@ says whose:
 
 ## Requirements
 
-- A Xymon server built from Xymon's current `main`: the API's settings go in
-  `xymonserver.d/`, which no release reads yet; on 4.3.30 a file there is
-  ignored, and with it the password the API should ask for.
+- Xymon 4.3.31 or later on the server: the API's settings go in
+  `xymonserver.d/`, which Xymon reads from 4.3.31; on 4.3.30 a file there is
+  ignored, and with it the password the API should ask for. The install
+  refuses an older Xymon unless given `--force`.
 - Python 3.9 or later, with the modules in
   [`requirements.txt`](requirements.txt): how the install finds or makes a
   Python with them is in the [top README](../README.md#installing-a-plugin).
