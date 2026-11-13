@@ -24,7 +24,7 @@ server-modules: fastapi uvicorn yaml
 task: xymonapi.tasks.DIST
 conf: xymonapi-apache.conf xymonapi-nginx.conf xymonapi-lighttpd.conf
 restart: app.py
-installed: Installed, off. Turn the API on: ./install.sh enable-server xymonapi. For other machines, include one of
+installed: Installed. For other machines, include one of
 installed:   @ETC@/xymonapi-{apache,nginx,lighttpd}.conf in the web server, or give the API xymond's certificate: see xymonapi(8).
 installed: It starts only with its users' passwords: @ETC@/xymonpasswd, the web pages' own, or another file in XYMONAPI_PASSWD.
 uninstalled: Uninstalled xymonapi. Kept, for you to remove: @ETC@/xymonapi-{apache,nginx,lighttpd}.conf --

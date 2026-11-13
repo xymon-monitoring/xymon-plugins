@@ -54,6 +54,8 @@ assert_contains "on already" "$(cat "$work/enable.log")" "[S13] enabling a task 
 
 install again
 [ -L "$link" ] || fail "[S13] an install turned off the task the admin had enabled"
+assert_contains "xymonapi's task is on, as it was" "$(cat "$work/again.log")" "[S13] and it says the task is on"
+assert_not_contains "is off" "$(cat "$work/again.log")" "[S13] and not that it is off"
 
 switch disable || fail "disable-server failed: $(cat "$work/disable.log")"
 if [ -e "$link" ] || [ -L "$link" ]; then fail "[S13] disable-server left tasks.d/xymonapi"; fi

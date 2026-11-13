@@ -12,8 +12,8 @@ manual: xymonapi-agent.1
 needs: xymonapi-mcp
 server-files: xymonagent.py xymonapi-agent.sh
 server-manual: xymonapi-agent.1
-installed: Installed xymonapi-agent beside the API. For /ask: set XYMONAPI_ASK=1 in a file under xymonserver.d/,
-installed:   and as the Xymon user install and log in to claude, codex or opencode, then run xymonapi-agent doctor: see xymonapi(8), /ask.
+installed: Installed xymonapi-agent beside the API. /ask is off unless XYMONAPI_ASK=1 is set in a file under xymonserver.d/;
+installed:   it also needs claude, codex or opencode installed and logged in as the Xymon user, which xymonapi-agent doctor checks: see xymonapi(8), /ask.
 uninstalled: Uninstalled xymonapi-agent. Kept: xymonapi-mcp and xymonapi.
 tools-files: xymonagent.py xymonapi-agent.sh
 tools-manual: xymonapi-agent.1

@@ -261,10 +261,15 @@ task() {
 	if grep -q '^[[:space:]]*DISABLED[[:space:]]*$' "$tf"; then
 		on=
 		sed -e '/^[[:space:]]*DISABLED[[:space:]]*$/d' "$tf" > "$tf.new" && mv "$tf.new" "$tf" && chmod 644 "$tf" || exit 1
-		echo "$1's task was DISABLED: it is off, and ./install.sh enable-server $1 turns it on"
+		echo "$1's task was DISABLED: it is off from now on, by its link"
 	fi
 	rm -f "$link"
-	[ -z "$on" ] || ln -s "$XYMONHOME/ext/$1/tasks.cfg" "$link" || exit 1
+	if [ -n "$on" ]; then
+		ln -s "$XYMONHOME/ext/$1/tasks.cfg" "$link" || exit 1
+		echo "$1's task is on, as it was"
+	else
+		echo "$1's task is off: XYMONHOME=$XYMONHOME ./install.sh enable-server $1 turns it on"
+	fi
 }
 
 # enable PLUGIN, disable PLUGIN -- its task on or off, by its link.
