@@ -38,8 +38,8 @@ home=$work/server
 rc=0
 "$ROOT/install.sh" install MANDIR="$work/man" >"$work/nohome.log" 2>&1 || rc=$?
 [ "$rc" -ne 0 ] || fail "install.sh install-server without XYMONHOME succeeded"
-assert_contains "XYMONHOME" "$(cat "$work/nohome.log")" "and it says what is missing"
-[ -e "$work/man" ] && fail "install.sh install-server without XYMONHOME installed something"
+assert_contains "XYMONHOME" "$(cat "$work/nohome.log")" "[S4] and it says what is missing"
+[ -e "$work/man" ] && fail "[S4] install.sh install-server without XYMONHOME installed something"
 
 # Under a umask that would leave a new file readable by its owner alone: the
 # task file must still be 644, like the others, whoever xymonlaunch runs as.
@@ -53,18 +53,23 @@ for f in xymonapi-rag/xymonrag.py xymonapi-rag/xymonapi-rag.sh xymonapi-rag/requ
 	assert_file_exists "$home/ext/$f"
 done
 [ -x "$home/ext/xymonapi/xymonapi.sh" ] || fail "the launcher is not executable"
+# install.sh reads each plugin from its PLUGIN file, and names none.
+for p in "$ROOT"/plugins/*/PLUGIN; do
+	p=$(sed -n 's/^name: *//p' "$p")
+	grep -qw -- "$p" "$ROOT/install.sh" && fail "[S1] install.sh names the plugin $p"
+done
 # Each plugin records its version beside its files: its release tag when
 # the checkout is at one, else the version in its PLUGIN file.
 for p in xymonapi xymonapi-rag; do
 	assert_file_exists "$home/ext/$p/VERSION"
 	want=$(git -C "$ROOT" describe --exact-match --tags --match "$p/v*" 2>/dev/null || sed -n 's/^version: *//p' "$ROOT/plugins/$p/PLUGIN")
-	assert_equal "$want" "$(cat "$home/ext/$p/VERSION")" "$p/VERSION holds its tag or its PLUGIN version"
+	assert_equal "$want" "$(cat "$home/ext/$p/VERSION")" "[S2] $p/VERSION holds its tag or its PLUGIN version"
 done
 assert_file_exists "$work/man/man8/xymonapi.8"
 
 task=$home/etc/tasks.d/xymonapi
 assert_file_exists "$task"
-grep -q '^[[:space:]]*DISABLED$' "$task" || fail "the task is not shipped DISABLED: $(cat "$task")"
+grep -q '^[[:space:]]*DISABLED$' "$task" || fail "[S5] the task is not shipped DISABLED: $(cat "$task")"
 grep -q "^[[:space:]]*ENVFILE $home/etc/xymonserver.cfg\$" "$task" \
 	|| fail "ENVFILE does not name this server's xymonserver.cfg: $(grep ENVFILE "$task")"
 grep -q '@XYMONHOME@' "$task" && fail "@XYMONHOME@ was left unreplaced in $task"
@@ -77,7 +82,7 @@ echo 'stale' > "$home/ext/xymonapi/gone.py"
 echo 'stale' > "$home/ext/xymonapi-rag/gone.py"
 "$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >"$work/update.log" 2>&1 \
 	|| fail "installing over an install failed: $(tail -n 5 "$work/update.log")"
-[ -e "$home/ext/xymonapi/gone.py" ] && fail "a file no longer shipped stayed in ext/xymonapi after an update"
+[ -e "$home/ext/xymonapi/gone.py" ] && fail "[S7] a file no longer shipped stayed in ext/xymonapi after an update"
 [ -e "$home/ext/xymonapi-rag/gone.py" ] && fail "a file no longer shipped stayed in ext/xymonapi-rag after an update"
 assert_file_exists "$home/ext/xymonapi/app.py"
 # The install stops a running API itself (xymonapi-auth.sh): with none
@@ -91,7 +96,7 @@ cp "$work/enabled" "$task"
 "$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >"$work/reinstall.log" 2>&1 \
 	|| fail "installing a second time failed: $(tail -n 5 "$work/reinstall.log")"
 cmp -s "$work/enabled" "$task" \
-	|| fail "a second install changed the task file the admin had enabled: $(cat "$task")"
+	|| fail "[S7] a second install changed the task file the admin had enabled: $(cat "$task")"
 
 # A server directory with a space, an & and a | in its name: the paths are
 # quoted, and the replacement sed makes in the task files is escaped.
@@ -109,10 +114,10 @@ assert_file_exists "$home/etc/xymonapi-apache.conf"
 grep -q 'ProxyPass ' "$home/etc/xymonapi-apache.conf" || fail "the Apache snippet has no ProxyPass"
 grep -q 'proxy_pass ' "$home/etc/xymonapi-nginx.conf" || fail "the nginx snippet has no proxy_pass"
 grep -q 'proxy.server' "$home/etc/xymonapi-lighttpd.conf" || fail "the lighttpd snippet has no proxy.server"
-assert_contains 'Installed. Enable the API' "$(cat "$work/install.log")" "the install says what to do next"
+assert_contains 'Installed. Enable the API' "$(cat "$work/install.log")" "[S5] the install says what to do next"
 echo "# mine" > "$home/etc/xymonapi-apache.conf"
 "$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || fail "a third install failed"
-assert_equal "# mine" "$(cat "$home/etc/xymonapi-apache.conf")" "an edited Apache snippet is kept"
+assert_equal "# mine" "$(cat "$home/etc/xymonapi-apache.conf")" "[S7] an edited Apache snippet is kept"
 
 # One plugin alone brings what it needs beside it: on the server,
 # xymonapi-rag needs the API that serves its index, and its client it reads
@@ -121,7 +126,7 @@ alone=$work/alone
 "$ROOT/install.sh" install xymonapi-rag XYMONHOME="$alone" MANDIR="$work/man-alone" >"$work/alone.log" 2>&1 \
 	|| fail "install.sh install-server of xymonapi-rag alone failed: $(tail -n 5 "$work/alone.log")"
 for p in xymonapi xymonapi-rag; do
-	assert_file_exists "$alone/ext/$p/VERSION"
+	[ -f "$alone/ext/$p/VERSION" ] || fail "[S3] installing xymonapi-rag alone did not install $p, which it needs"
 done
 
 # install-client is refused by name, before any plugin is looked at: it says
@@ -138,7 +143,7 @@ done
 # The tools side: no Xymon here, PREFIX with a space in its name.
 prefix="$work/client prefix"
 "$ROOT/install.sh" install-tools PREFIX="$prefix" >"$work/client.log" 2>&1 \
-	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/client.log")"
+	|| fail "[S4] install.sh install-tools failed: $(tail -n 5 "$work/client.log")"
 # An update replaces the plugin's directory there too, and leaves the
 # virtualenv an earlier setup made beside the plugins alone.
 mkdir -p "$prefix/libexec/xymon-plugins/venv" && : > "$prefix/libexec/xymon-plugins/venv/kept"
@@ -159,7 +164,7 @@ assert_file_exists "$prefix/share/man/man1/xymonapi-connect.1"
 [ -x "$prefix/bin/xymonapi-rag" ] || fail "bin/xymonapi-rag is not executable"
 grep -qF "\"$prefix/libexec/xymon-plugins/xymonapi-rag/xymonapi-rag.sh\"" "$prefix/bin/xymonapi-rag" \
 	|| fail "bin/xymonapi-rag does not run the installed launcher, quoted: $(cat "$prefix/bin/xymonapi-rag")"
-[ -e "$prefix/libexec/xymon-plugins/xymonapi/app.py" ] && fail "install-tools installed the API"
+[ -e "$prefix/libexec/xymon-plugins/xymonapi/app.py" ] && fail "[S4] install-tools installed the API"
 # The installed xymonapi-rag runs: --help needs Python alone, and finds
 # xymonapi_client.py in xymonapi/ beside it, as in the repository.
 if command -v "${XYMONAPI_PYTHON:-python3}" >/dev/null 2>&1; then
@@ -175,21 +180,21 @@ fi
 for p in xymonapi; do
 	rc=0
 	"$ROOT/install.sh" uninstall "$p" XYMONHOME="$home" MANDIR="$work/man" >"$work/un-$p.log" 2>&1 || rc=$?
-	[ "$rc" -ne 0 ] || fail "uninstalling $p while xymonapi-mcp and xymonapi-rag need it succeeded"
+	[ "$rc" -ne 0 ] || fail "[S3] uninstalling $p while xymonapi-mcp and xymonapi-rag need it succeeded"
 	# Any of those installed that need it; the first, by name, is xymonapi-mcp.
-	assert_contains "$p is needed by xymonapi-mcp" "$(cat "$work/un-$p.log")" "and says which plugin needs $p"
+	assert_contains "$p is needed by xymonapi-mcp" "$(cat "$work/un-$p.log")" "[S3] and says which plugin needs $p"
 	assert_file_exists "$home/ext/$p/VERSION"
 done
 "$ROOT/install.sh" uninstall XYMONHOME="$home" MANDIR="$work/man" >"$work/uninstall.log" 2>&1 \
 	|| fail "install.sh uninstall-server failed: $(tail -n 5 "$work/uninstall.log")"
 for f in ext/xymonapi ext/xymonapi-mcp ext/xymonapi-rag etc/tasks.d/xymonapi etc/tasks.d/xymonapi-rag; do
-	if [ -e "$home/$f" ] || [ -L "$home/$f" ]; then fail "install.sh uninstall-server left $f"; fi
+	if [ -e "$home/$f" ] || [ -L "$home/$f" ]; then fail "[S8] install.sh uninstall-server left $f"; fi
 done
-[ -e "$work/man/man8/xymonapi.8" ] && fail "install.sh uninstall-server left the manual page xymonapi.8"
+[ -e "$work/man/man8/xymonapi.8" ] && fail "[S8] install.sh uninstall-server left the manual page xymonapi.8"
 [ -e "$work/man/man1/xymonapi-rag.1" ] && fail "install.sh uninstall-server left the manual page xymonapi-rag.1"
 assert_file_exists "$home/etc/xymonapi-apache.conf"
-assert_contains "take its Include out of the web server first" "$(cat "$work/uninstall.log")" "uninstall says the snippets are kept, and how to remove them"
-assert_contains "XYMONAPI_TOKENS" "$(cat "$work/uninstall.log")" "and that the tokens file is kept"
+assert_contains "take its Include out of the web server first" "$(cat "$work/uninstall.log")" "[S10] uninstall says the snippets are kept, and how to remove them"
+assert_contains "XYMONAPI_TOKENS" "$(cat "$work/uninstall.log")" "[S10] and that the tokens file is kept"
 
 rc=0
 "$ROOT/install.sh" uninstall-tools xymonapi PREFIX="$prefix" >"$work/unc-api.log" 2>&1 || rc=$?

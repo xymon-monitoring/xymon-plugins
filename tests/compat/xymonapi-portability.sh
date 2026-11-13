@@ -66,7 +66,7 @@ awk '
 ' "$work/report" | sed -e 's|tests/plugins/\([^/]*\)/|plugins/\1/tests/|' -e 's|tests/install-sh-under-check\.sh|install.sh|' > "$work/violations"
 
 if [ -s "$work/violations" ]; then
-	fail "the plugins' tests break Xymon's portability rules:
+	fail "[S12] the plugins' tests break Xymon's portability rules:
 $(cat "$work/violations")"
 fi
 # Exited with an error for something other than violations -- a rule's own

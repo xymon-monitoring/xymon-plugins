@@ -119,13 +119,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Move stable to this commit
+      - name: Move stable to this commit [S11]
         run: |
           if git fetch -q origin stable; then
             if git merge-base --is-ancestor "$GITHUB_SHA" origin/stable; then
               echo "stable already holds $GITHUB_SHA"; exit 0
             fi
             git merge-base --is-ancestor origin/stable "$GITHUB_SHA" \
-              || { echo "stable is not behind $GITHUB_SHA: left as it is" >&2; exit 1; }
+              || { echo "[S11] stable is not behind $GITHUB_SHA: left as it is" >&2; exit 1; }
           fi
           git push origin "$GITHUB_SHA:refs/heads/stable"
