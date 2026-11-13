@@ -3,7 +3,8 @@
 The plugins of [xymon-plugins](../README.md): each a directory here with a
 `PLUGIN` file, a README, a manual page, tests and its code, installed with
 [`install.sh`](../install.sh) at the repository's top. What a plugin is, and
-the conventions they share, are in the [top README](../README.md).
+what installing one guarantees, are in [`SPEC.md`](../SPEC.md); the
+conventions they share, in the [top README](../README.md).
 
 ## The plugins
 

@@ -58,19 +58,16 @@ without it, checked by reverting what makes it true.
   | a plugin's manual page | an admin, or a laptop user, with the plugin installed | its behaviour and every setting |
   | `plugins/xymonapi/openapi.yaml` | whoever writes a client or another implementation of the API | the contract: each path's answers, the closed list of errors, the numbered rules |
   | a plugin's `PLUGIN` file | `install.sh`, and whoever packages it | its name, side, version, what it needs, and what it installs |
+  | `SPEC.md` | whoever changes the installer or adds a plugin | the plugin model's numbered rules, each enforced by a test |
 
 ## What only this repository has
 
 ### Plugins
 
-Each plugin is a directory under `plugins/` with a `PLUGIN` file, which
-says what it installs on each side; its comments name every key.
-`install.sh`, at the top, is the one installer: it reads those lines and
-holds nothing particular to a plugin, so a new plugin is a directory and
-its `PLUGIN` file, with no change to the installer. It is a POSIX shell
-script, for every machine a plugin goes to, and keeps to the portability
-rules below. A plugin that needs another names it there, on its `needs:`
-line, and installs it first. Code shared by two plugins lives in one of them, the one
+What a plugin is, and what the installer guarantees, are the rules of
+[`SPEC.md`](SPEC.md); how its rules are numbered and tested is at its top.
+
+Code shared by two plugins lives in one of them, the one
 it belongs to, and the other installs that one: the API's client,
 `xymonapi_client.py`, is `xymonapi`'s. A plugin's README and manual page name the
 plugins it uses, never those that use it: a new plugin built on another
