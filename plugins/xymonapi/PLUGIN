@@ -2,7 +2,7 @@
 # it alone. One key per line, a key repeated for each line of a message;
 # ./install.sh at the repository's top installs it from the lines below.
 name: xymonapi
-version: 2.4.0
+version: 3.0.0
 side: server, client
 summary: a read-only HTTP and JSON interface to a Xymon server, as one of its xymonlaunch tasks, and its client
 requires: python >= 3.9
@@ -26,6 +26,7 @@ conf: xymonapi-apache.conf xymonapi-nginx.conf xymonapi-lighttpd.conf
 restart: app.py
 installed: Installed, off. Turn the API on: ./install.sh enable-server xymonapi. For other machines, include one of
 installed:   @ETC@/xymonapi-{apache,nginx,lighttpd}.conf in the web server, or give the API xymond's certificate: see xymonapi(8).
+installed: It starts only with its users' passwords: @ETC@/xymonpasswd, the web pages' own, or another file in XYMONAPI_PASSWD.
 uninstalled: Uninstalled xymonapi. Kept, for you to remove: @ETC@/xymonapi-{apache,nginx,lighttpd}.conf --
 uninstalled:   take its Include out of the web server first -- and the tokens file, $XYMONAPI_TOKENS
 uninstalled:   ($XYMONVAR/xymonapi/tokens by default).

@@ -486,6 +486,11 @@ def build_app() -> FastAPI:
         # Refuse to start rather than answer 401 to everyone, which looks
         # like a wrong password when it is a wrong setting.
         if not os.access(xymon.XYMONAPI_PASSWD, os.R_OK):
+            if "XYMONAPI_PASSWD" not in os.environ:
+                sys.exit(f"xymonapi: XYMONAPI_PASSWD is not set, and Xymon's password file, "
+                         f"{xymon.XYMONAPI_PASSWD}, cannot be read: create it with htpasswd, name "
+                         f"another in XYMONAPI_PASSWD, or set XYMONAPI_PASSWD empty for an API "
+                         f"open to anyone who reaches it")
             sys.exit(f"xymonapi: cannot read XYMONAPI_PASSWD={xymon.XYMONAPI_PASSWD}")
         if shutil.which("htpasswd") is None:
             sys.exit("xymonapi: XYMONAPI_PASSWD is set, and checking it needs "

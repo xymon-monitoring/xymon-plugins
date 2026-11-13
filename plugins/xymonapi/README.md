@@ -151,9 +151,9 @@ htpasswd -B "$XYMONHOME/etc/xymonpasswd" alice
 ```
 
 The API reads the file at each request: nothing to restart. Without that
-file, the API asks for no password at all -- fine while it listens on
-127.0.0.1 alone, not once other machines reach it. `XYMONAPI_PASSWD` names
-another file, as `xymonapi.8` says.
+file the API does not start, and says so: `XYMONAPI_PASSWD` names another
+file, or, set empty, opens the API to anyone who reaches it, as
+`xymonapi.8` says.
 
 ## Reaching it from another machine
 

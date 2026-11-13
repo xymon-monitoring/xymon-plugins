@@ -117,7 +117,8 @@ done
 
 # Xymon's own password file is the default: with XYMONHOME set and
 # etc/xymonpasswd there, nothing else need be set, and the API asks for
-# what the web pages ask for. The empty string turns it off.
+# what the web pages ask for. The empty string turns it off; with neither,
+# the API does not start.
 stop_process "$API_PID"
 API_PID=""
 mkdir -p "$work/home/etc"; cp "$work/htpasswd" "$work/home/etc/xymonpasswd"
@@ -133,6 +134,16 @@ url="http://127.0.0.1:$API_PORT/xymon/api/v1/health"
 assert_equal "200" "$(code)" "XYMONAPI_PASSWD set empty: no password asked"
 stop_process "$API_PID"
 API_PID=""
+# With nothing set and no etc/xymonpasswd, the API does not start, rather
+# than answer anyone: an open API is asked for, never had by a file that
+# went missing.
+rm "$work/home/etc/xymonpasswd"
+rc=0
+( unset XYMONAPI_PASSWD; XYMONHOME="$work/home" XYMONAPI_LISTEN="127.0.0.1:$(free_port)" \
+	"$ROOT/plugins/xymonapi/xymonapi.sh" ) > "$work/nopasswd.log" 2>&1 || rc=$?
+assert_equal "1" "$rc" "the API with no setting and no etc/xymonpasswd"
+assert_contains "XYMONAPI_PASSWD is not set, and Xymon's password file" "$(cat "$work/nopasswd.log")" "and it says why"
+assert_contains "set XYMONAPI_PASSWD empty" "$(cat "$work/nopasswd.log")" "and how to open it on purpose"
 rc=0
 XYMONAPI_PASSWD="$work/no-such-file" "$ROOT/plugins/xymonapi/xymonapi.sh" > "$work/nofile.log" 2>&1 || rc=$?
 assert_equal "1" "$rc" "the API with a password file it cannot read"
