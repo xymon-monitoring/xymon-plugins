@@ -10,8 +10,8 @@
 # ENVFILE naming that server's xymonserver.cfg. An install over one the admin
 # edited and enabled leaves the file alone and the task on: turning it off
 # would stop the API at the next upgrade, with nothing to say why. Without XYMONHOME it installs
-# nothing and says so. The Apache snippet goes to $XYMONHOME/etc, kept too
-# once there. ./install.sh install-tools puts the MCP server and the search commands
+# nothing and says so. The web server snippets go to ext/xymonapi, an
+# admin's edits kept. ./install.sh install-tools puts the MCP server and the search commands
 # under PREFIX, with two commands in bin that run them from there, and
 # xymonapi's client alone beside them, not the API. Installing
 # again replaces each plugin's directory, so a file no longer shipped is
@@ -19,8 +19,8 @@
 # plugins is kept. A plugin installed alone brings the plugins it needs
 # beside it: xymonapi-rag on the server, the API with its client. The
 # uninstall refuses a plugin another installed one needs, removes each
-# plugin's files, manual page and task, and keeps the web server snippets
-# and the data, saying so; on a laptop it says what to undo by hand.
+# plugin's files, manual page, task and snippets, and keeps the data,
+# saying so; on a laptop it says what to undo by hand.
 # install-client, uninstall-client and venv-client are refused, naming the
 # tools action, and install nothing.
 #
@@ -113,14 +113,15 @@ grep -qF "ENVFILE $odd/etc/xymonserver.cfg" "$odd/ext/xymonapi/tasks.cfg" \
 grep -qF "ENVFILE $odd/etc/xymonserver.cfg" "$odd/ext/xymonapi-rag/tasks.cfg" \
 	|| fail "the index task file does not name that directory as it is: $(grep ENVFILE "$odd/ext/xymonapi-rag/tasks.cfg")"
 
-assert_file_exists "$home/etc/xymonapi-apache.conf"
-grep -q 'ProxyPass ' "$home/etc/xymonapi-apache.conf" || fail "the Apache snippet has no ProxyPass"
-grep -q 'proxy_pass ' "$home/etc/xymonapi-nginx.conf" || fail "the nginx snippet has no proxy_pass"
-grep -q 'proxy.server' "$home/etc/xymonapi-lighttpd.conf" || fail "the lighttpd snippet has no proxy.server"
+assert_file_exists "$home/ext/xymonapi/xymonapi-apache.conf"
+grep -q 'ProxyPass ' "$home/ext/xymonapi/xymonapi-apache.conf" || fail "[S16] the Apache snippet has no ProxyPass"
+grep -q 'proxy_pass ' "$home/ext/xymonapi/xymonapi-nginx.conf" || fail "[S16] the nginx snippet has no proxy_pass"
+grep -q 'proxy.server' "$home/ext/xymonapi/xymonapi-lighttpd.conf" || fail "[S16] the lighttpd snippet has no proxy.server"
+[ -e "$home/etc/xymonapi-apache.conf" ] && fail "[S16] the install wrote a snippet in etc/"
 assert_contains "xymonapi's task is off: XYMONHOME=$home ./install.sh enable-server xymonapi turns it on" "$(cat "$work/install.log")" "[S5] the install says what to do next"
-echo "# mine" > "$home/etc/xymonapi-apache.conf"
+echo "# mine" > "$home/ext/xymonapi/xymonapi-apache.conf"
 "$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || fail "a third install failed"
-assert_equal "# mine" "$(cat "$home/etc/xymonapi-apache.conf")" "[S7] an edited Apache snippet is kept"
+assert_equal "# mine" "$(cat "$home/ext/xymonapi/xymonapi-apache.conf")" "[S7] an edited Apache snippet is kept"
 
 # One plugin alone brings what it needs beside it: on the server,
 # xymonapi-rag needs the API that serves its index, and its client it reads
@@ -195,8 +196,7 @@ for f in ext/xymonapi ext/xymonapi-mcp ext/xymonapi-rag etc/tasks.d/xymonapi etc
 done
 [ -e "$work/man/man8/xymonapi.8" ] && fail "[S8] install.sh uninstall-server left the manual page xymonapi.8"
 [ -e "$work/man/man1/xymonapi-rag.1" ] && fail "install.sh uninstall-server left the manual page xymonapi-rag.1"
-assert_file_exists "$home/etc/xymonapi-apache.conf"
-assert_contains "take its Include out of the web server first" "$(cat "$work/uninstall.log")" "[S10] uninstall says the snippets are kept, and how to remove them"
+assert_contains "web server snippets went with ext/xymonapi" "$(cat "$work/uninstall.log")" "[S16] uninstall says the snippets went with the plugin"
 assert_contains "XYMONAPI_TOKENS" "$(cat "$work/uninstall.log")" "[S10] and that the tokens file is kept"
 
 rc=0
@@ -211,4 +211,4 @@ for f in bin/xymonapi-mcp bin/xymonapi-rag share/man/man1/xymonapi-mcp.1 share/m
 done
 assert_contains "claude mcp remove" "$(cat "$work/unclient.log")" "uninstall-tools says what register did besides"
 
-pass "./install.sh install-server puts the server plugins in ext/ with tasks off and the Apache snippet, keeps what the admin edited, takes odd directory names, replaces each plugin's directory on update; install-tools lays out the client side; uninstall removes them, refusing one another needs"
+pass "./install.sh install-server puts the server plugins in ext/ with tasks off and its web server snippets, keeps what the admin edited, takes odd directory names, replaces each plugin's directory on update; install-tools lays out the client side; uninstall removes them, refusing one another needs"

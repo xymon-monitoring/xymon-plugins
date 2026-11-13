@@ -304,11 +304,15 @@ gives.
 .IP "\fB$XYMONHOME/ext/xymonapi/tasks.cfg\fR"
 The xymonlaunch task, on when \fB$XYMONHOME/etc/tasks.d/xymonapi\fR links to
 it. A later installation leaves it as it is, and whether it is on.
-.IP "\fB$XYMONHOME/etc/xymonapi-apache.conf\fR, \fBxymonapi-nginx.conf\fR, \fBxymonapi-lighttpd.conf\fR"
+.IP "\fB$XYMONHOME/ext/xymonapi/xymonapi-apache.conf\fR, \fBxymonapi-nginx.conf\fR, \fBxymonapi-lighttpd.conf\fR"
 Snippets that serve the API through the web server, for other machines:
 /xymon/api/ passed to 127.0.0.1:1986, in the HTTPS part where the server
 has one. Include the one for your web server where its Xymon configuration
-is. Installed once; a later installation leaves them as they are.
+is, in a way that skips it once it is gone: IncludeOptional on Apache, a
+wildcard include, xymonapi-nginx*.conf, on nginx and lighttpd. A later
+installation keeps your edits; removing ext/xymonapi removes them, and the
+web server still starts. One an older installation wrote in $XYMONHOME/etc
+is left there, and copied into ext/xymonapi by the next.
 .IP "\fB$XYMONHOME/etc/xymonserver.d/\fR"
 A file of yours here holds the settings of its own listed under
 ENVIRONMENT. Nothing is installed there.

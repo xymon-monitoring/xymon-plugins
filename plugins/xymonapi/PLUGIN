@@ -24,12 +24,13 @@ server-modules: fastapi uvicorn yaml
 task: xymonapi.tasks.DIST
 conf: xymonapi-apache.conf xymonapi-nginx.conf xymonapi-lighttpd.conf
 restart: app.py
-installed: Installed. For other machines, include one of
-installed:   @ETC@/xymonapi-{apache,nginx,lighttpd}.conf in the web server, or give the API xymond's certificate: see xymonapi(8).
+installed: Installed. For other machines, include @XYMONHOME@/ext/xymonapi/xymonapi-{apache,nginx,lighttpd}.conf in the web server,
+installed:   so that it is skipped once gone -- IncludeOptional on Apache, a wildcard (xymonapi-nginx*.conf) on nginx and lighttpd --
+installed:   or give the API xymond's certificate: see xymonapi(8).
 installed: It starts only with its users' passwords: @ETC@/xymonpasswd, the web pages' own, or another file in XYMONAPI_PASSWD.
-uninstalled: Uninstalled xymonapi. Kept, for you to remove: @ETC@/xymonapi-{apache,nginx,lighttpd}.conf --
-uninstalled:   take its Include out of the web server first -- and the tokens file, $XYMONAPI_TOKENS
-uninstalled:   ($XYMONVAR/xymonapi/tokens by default).
+uninstalled: Uninstalled xymonapi. Its web server snippets went with ext/xymonapi, which an IncludeOptional or a wildcard include skips.
+uninstalled:   Kept: the tokens file, $XYMONAPI_TOKENS ($XYMONVAR/xymonapi/tokens by default), and any snippet an older install
+uninstalled:   left in @ETC@, yours to remove once no Include names it.
 tools-files: xymonapi_client.py xymonapi-connect.sh
 tools-manual: xymonapi-connect.1
 command: xymonapi-connect xymonapi-connect.sh

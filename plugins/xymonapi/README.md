@@ -91,9 +91,10 @@ XYMONHOME=/usr/lib/xymon/server ./install.sh install-server xymonapi
 ```
 
 Besides the code, the task and the manual page, which every plugin
-installs ([top README](../README.md#installing-a-plugin)), it writes once the web
-server snippets `$XYMONHOME/etc/xymonapi-{apache,nginx,lighttpd}.conf`, for
-[other machines](#reaching-it-from-another-machine), and keeps them after.
+installs ([top README](../README.md#installing-a-plugin)), it installs the web
+server snippets `$XYMONHOME/ext/xymonapi/xymonapi-{apache,nginx,lighttpd}.conf`,
+for [other machines](#reaching-it-from-another-machine), and keeps your edits
+to them.
 Xymon's own install links `$XYMONHOME/ext` and `$XYMONHOME/etc` to wherever
 those really are -- `/etc/xymon` on many installations -- so the files land
 there; with `DESTDIR`, the staged directories are plain ones.
@@ -113,9 +114,12 @@ there (`xymonapi.8`, `XYMONAPI_SOCKET`).
 
 Updating: install again. The install stops the running API, which would go
 on with the code it loaded, and says so; xymonlaunch starts the new.
-`./install.sh uninstall-server xymonapi` keeps the snippets -- take the `Include` out
-of your web server's configuration before deleting them -- and the tokens
-file, `$XYMONAPI_TOKENS`.
+`./install.sh uninstall-server xymonapi` removes the snippets with the rest of
+`ext/xymonapi`, which the web server's optional include then skips, and keeps
+the tokens file, `$XYMONAPI_TOKENS`. A snippet an older install wrote in
+`$XYMONHOME/etc` is left there: the next install copies it, your edits with
+it, into `ext/xymonapi`, and says so; include the new one, then remove the
+old.
 
 ## Asking in words: /ask
 
@@ -169,8 +173,13 @@ adds:
   `etc/tls/` and speaks HTTPS by itself; or name any certificate and key in
   `XYMONAPI_TLS_CERT` and `_KEY`. Open the port with
   `XYMONAPI_LISTEN="0.0.0.0:1986"`. The URL: `https://xymon.example.ch:1986`.
-- **The web server in front of it.** Include the snippet the install wrote
-  for your web server, `$XYMONHOME/etc/xymonapi-*.conf`, in its HTTPS part:
+- **The web server in front of it.** Include the snippet for your web
+  server, in `$XYMONHOME/ext/xymonapi/`, in its HTTPS part, so that it is
+  skipped once the plugin is gone: `IncludeOptional
+  .../ext/xymonapi/xymonapi-apache.conf` on Apache, `include
+  .../ext/xymonapi/xymonapi-nginx*.conf;` on nginx, `include
+  ".../ext/xymonapi/xymonapi-lighttpd*.conf"` on lighttpd -- a plain include
+  of a file that is gone stops lighttpd and Apache from starting. That gives
   one hostname for the pages and the API. The URL: the address your Xymon
   pages are at -- the same web server and the same port -- without the
   path: pages at `https://xymon.example.ch:8443/xymon/` mean the URL

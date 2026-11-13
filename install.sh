@@ -320,14 +320,23 @@ installed_tasks() {
 	done
 }
 
-# conf PLUGIN -- its web server snippets into $XYMONHOME/etc unless there
-# already: an admin's edits are kept, as a task file is.
+# conf PLUGIN -- its web server snippets, in the plugin's directory, which
+# the web server includes in a way that skips a file that is not there --
+# Apache's IncludeOptional, a wildcard include for nginx -- so that removing
+# ext/PLUGIN takes them with it, and the web server still starts. The one an
+# admin edited is kept: install_server set it aside. A snippet an older
+# install put in $XYMONHOME/etc is left there, as a web server may still
+# include it, and its content, edits and all, is the one the plugin's
+# directory gets the first time.
 conf() {
 	for c in $(field "$1" conf); do
-		if [ -e "$ETC/$c" ]; then
-			echo "keeping $ETC/$c"
+		if [ -f "$EXTROOT/.$1.$c" ]; then
+			mv "$EXTROOT/.$1.$c" "$EXTROOT/$1/$c" || exit 1
+		elif [ -f "$ETC/$c" ]; then
+			cp "$ETC/$c" "$EXTROOT/$1/$c" && chmod 644 "$EXTROOT/$1/$c" || exit 1
+			echo "$ETC/$c, an older install's, is copied to $EXTROOT/$1/$c and left where it is: include the new one with IncludeOptional, or a wildcard include on nginx, then remove the old one"
 		else
-			cp "$ROOT/plugins/$1/$c" "$ETC/" && chmod 644 "$ETC/$c"
+			cp "$ROOT/plugins/$1/$c" "$EXTROOT/$1/" && chmod 644 "$EXTROOT/$1/$c" || exit 1
 		fi
 	done
 }
@@ -437,8 +446,12 @@ install_server() {
 	ext=$EXTROOT/$1
 	# Refused before anything is replaced, not halfway through.
 	[ -z "$(field "$1" task)" ] || ours "$1"
-	# The task file an admin may have enabled outlives the directory.
+	# The task file an admin may have enabled, and the web server snippets
+	# an admin may have edited, outlive the directory.
 	if [ -f "$ext/tasks.cfg" ]; then mv "$ext/tasks.cfg" "$EXTROOT/.$1.tasks.cfg" || exit 1; fi
+	for c in $(field "$1" conf); do
+		if [ -f "$ext/$c" ]; then mv "$ext/$c" "$EXTROOT/.$1.$c" || exit 1; fi
+	done
 	fresh "$ext" || exit 1
 	copy "$1" server "$ext"
 	version "$1" "$ext"
