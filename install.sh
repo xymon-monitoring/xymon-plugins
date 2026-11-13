@@ -167,24 +167,34 @@ dist() {
 # its next reload, where a copy in tasks.d would have it log that it cannot
 # start the task, forever. The file an admin enabled is not put back to
 # DISABLED by the next install: install_server sets it aside before it
-# replaces the directory, and a task file an older install copied into
-# tasks.d is moved into the directory instead. Anything else at
-# tasks.d/PLUGIN is left alone.
-task() {
-	t=$(field "$1" task); [ -n "$t" ] || return 0
-	tf=$EXTROOT/$1/tasks.cfg
+# replaces the directory. A regular file at tasks.d/PLUGIN is moved into
+# the directory instead, and wins over the one set aside, because it is the
+# one xymonlaunch was reading: the copy an older install made there, or
+# what an editor that writes by renaming, "sed -i" among them, left where
+# the link was. A link to anything else at tasks.d/PLUGIN is left alone:
+# taskcheck refuses it before anything is replaced.
+taskcheck() {
+	[ -n "$(field "$1" task)" ] || return 0
 	link=$TASKDIR/$1
 	dest=$XYMONHOME/ext/$1/tasks.cfg
 	if [ -L "$link" ] && [ "$(readlink "$link")" != "$dest" ]; then
 		die "$link is a link to $(readlink "$link"), not $1's task: left alone"
 	fi
+}
+
+task() {
+	t=$(field "$1" task); [ -n "$t" ] || return 0
+	tf=$EXTROOT/$1/tasks.cfg
+	link=$TASKDIR/$1
+	dest=$XYMONHOME/ext/$1/tasks.cfg
 	mkdir -p "$TASKDIR"
-	if [ -f "$EXTROOT/.$1.tasks.cfg" ]; then
-		mv "$EXTROOT/.$1.tasks.cfg" "$tf" || exit 1
-		echo "keeping $tf"
-	elif [ -f "$link" ] && [ ! -L "$link" ]; then
+	if [ -f "$link" ] && [ ! -L "$link" ]; then
+		rm -f "$EXTROOT/.$1.tasks.cfg"
 		mv "$link" "$tf" || exit 1
 		echo "keeping $link, moved to $tf"
+	elif [ -f "$EXTROOT/.$1.tasks.cfg" ]; then
+		mv "$EXTROOT/.$1.tasks.cfg" "$tf" || exit 1
+		echo "keeping $tf"
 	else
 		sed -e "s|@XYMONHOME@|$(sedesc "$XYMONHOME")|g" "$ROOT/plugins/$1/$t" > "$tf" && chmod 644 "$tf"
 	fi
@@ -306,6 +316,7 @@ install_server() {
 	for n in $(field "$1" needs); do install_server "$n"; done
 	[ -n "$(field "$1" server-files)" ] || die "$1 has nothing to install on the server"
 	ext=$EXTROOT/$1
+	taskcheck "$1"
 	# The task file an admin may have enabled outlives the directory.
 	if [ -f "$ext/tasks.cfg" ]; then mv "$ext/tasks.cfg" "$EXTROOT/.$1.tasks.cfg" || exit 1; fi
 	fresh "$ext" || exit 1
