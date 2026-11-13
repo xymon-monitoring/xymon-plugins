@@ -5,6 +5,16 @@ its version, what breaks, and what to do. Every other change needs nothing
 but installing the new code (see each plugin's README). CI refuses a change
 that breaks the API's contract without a line here.
 
+## A password file is needed, from xymonapi 3.0.0
+
+With `XYMONAPI_PASSWD` not set and no `$XYMONHOME/etc/xymonpasswd`, the API
+answered anyone who reached it. It now does not start, and says why. A
+missing file -- a configuration kept from an older install that does not
+read `xymonserver.d/`, a new install without the web pages' passwords --
+no longer opens the API without a word. Create the file with `htpasswd`,
+name another in `XYMONAPI_PASSWD`, or, for an API open to anyone who
+reaches it, set `XYMONAPI_PASSWD=""` in a file under `xymonserver.d/`.
+
 ## Server tasks on and off, by a link, from xymonapi 2.4.0
 
 A plugin's task is no longer turned on by removing `DISABLED` from its

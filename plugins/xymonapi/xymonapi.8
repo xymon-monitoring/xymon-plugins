@@ -244,10 +244,11 @@ have it: xymonapi-mcp(1), xymonapi-rag(1).
 .IP "\fBXYMONAPI_PASSWD\fR"
 An htpasswd file: every request on the port but /plugins needs a user and
 password from it, or a client token, and is answered 401 otherwise. The default is Xymon's own,
-$XYMONHOME/etc/xymonpasswd, when it exists -- the file the web pages use,
-whose users useradm.cgi and chpasswd.cgi manage -- so the API asks for
-what the pages ask for with nothing set. Set it to another file, or to the
-empty string for an API open to anyone who can reach it. The password is
+$XYMONHOME/etc/xymonpasswd -- the file the web pages use, whose users
+useradm.cgi and chpasswd.cgi manage -- so the API asks for what the pages
+ask for with nothing set. When that file is missing, xymonapi does not
+start, and says so: set XYMONAPI_PASSWD to another file, or to the empty
+string for an API open to anyone who can reach it. The password is
 checked by Apache's htpasswd program, which must be on PATH; xymonapi does
 not start if it is not, or if it cannot read the file.
 .IP "\fBXYMONAPI_TOKENS\fR"

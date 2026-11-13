@@ -28,6 +28,11 @@ fi
 # shellcheck source=/dev/null
 . "$XYMON_SRC/tests/lib/xymond-daemon.sh"
 
+# The API asks for a password unless told not to. The tests that do not set
+# XYMONAPI_PASSWD ask for none, as they did when a missing file meant that;
+# one that unsets it after this checks the default.
+export XYMONAPI_PASSWD="${XYMONAPI_PASSWD-}"
+
 # find_root -- this repository's top. Xymon's own takes the test's directory
 # two levels up, which is right for its tests/<dir>/ but not for a plugin's
 # tests under plugins/<name>/tests/: this file's place, tests/lib/, is the
