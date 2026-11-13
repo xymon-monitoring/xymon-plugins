@@ -5,12 +5,14 @@ name: xymonapi
 version: 2.4.0
 side: server, client
 summary: a read-only HTTP and JSON interface to a Xymon server, as one of its xymonlaunch tasks, and its client
-requires: on the server, xymon >= 4.3.31 (main); python >= 3.9
+requires: python >= 3.9
+xymon: 4.3.31
 manual: xymonapi.8
 
 # How ./install.sh installs it. server-* and tools-* are each side's: the
 # files copied beside the plugin's others, the manual page, the modules its
 # Python needs (offered at install time), the plugins it needs first.
+# xymon is the lowest Xymon its server side works with.
 # executable lists the files made 755, the others 644; command is the
 # tools' command in $PREFIX/bin and the script it runs; task, conf and
 # restart are the server's xymonlaunch task, web server snippets kept once

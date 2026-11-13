@@ -15,7 +15,11 @@
 # action: "client" is Xymon's, the monitored host, and the action of that
 # name will install a client extension there once one is here.
 #
-# With no PLUGIN, every plugin of that side. A plugin that needs another
+# With no PLUGIN, every plugin of that side. A server plugin whose xymon:
+# line names a newer Xymon than $XYMONHOME/bin/xymon --version gives is
+# refused, unless --force. A development version, 4.3.32-dev, comes after
+# 4.3.31 and before 4.3.32: a plugin that needs 4.3.32 installs on it with
+# a warning, as it may lack what 4.3.32 brought. A plugin that needs another
 # installs it first, and an uninstall is refused while one installed needs
 # the plugin removed. An install starts nothing: a server task is on when
 # tasks.d/PLUGIN, a link to it, is there, which enable-server makes and
@@ -39,15 +43,18 @@ ROOT=$(cd "$(dirname "$0")" && pwd)
 
 die() { echo "install.sh: $*" >&2; exit 1; }
 usage() {
-	echo "usage: ./install.sh install-server|install-tools|enable-server|disable-server|uninstall-server|uninstall-tools|venv-server|venv-tools [PLUGIN...] [NAME=value...]" >&2
+	echo "usage: ./install.sh install-server|install-tools|enable-server|disable-server|uninstall-server|uninstall-tools|venv-server|venv-tools [--force] [PLUGIN...] [NAME=value...]" >&2
 	exit 2
 }
 
 [ $# -ge 1 ] || usage
 ACTION=$1; shift
 NAMES=
+FORCE=
 for a in "$@"; do
 	case $a in
+		--force) FORCE=1 ;;
+		-*) usage ;;
 		*=*) export "$a" ;;
 		*) NAMES="$NAMES $a" ;;
 	esac
@@ -115,6 +122,41 @@ dependents() {
 	for p in $(all_plugins); do
 		case " $(field "$p" needs) " in *" $1 "*) echo "$p" ;; esac
 	done
+}
+
+# older A B -- true when version A is older than B, comparing X.Y.Z by
+# number; awk reads 32-dev as 32.
+older() {
+	awk -v a="$1" -v b="$2" 'BEGIN {
+		n = split(a, x, "."); m = split(b, y, ".")
+		for (i = 1; i <= (n > m ? n : m); i++) {
+			if (x[i] + 0 < y[i] + 0) exit 0
+			if (x[i] + 0 > y[i] + 0) exit 1
+		}
+		exit 1
+	}'
+}
+
+# xymon_ok PLUGIN -- refuse the plugin, or one it needs, when its xymon:
+# line names a newer Xymon than the server's, unless --force; say so when
+# the server's cannot be read. Run on every plugin to install before any is
+# touched.
+CHECKED=
+xymon_ok() {
+	case " $CHECKED " in *" $1 "*) return 0 ;; esac
+	CHECKED="$CHECKED $1"
+	for n in $(field "$1" needs); do xymon_ok "$n"; done
+	want=$(field "$1" xymon); [ -n "$want" ] || return 0
+	have=$("$DESTDIR$XYMONHOME/bin/xymon" --version 2>/dev/null | sed -n 's/^Xymon version \([0-9][0-9.]*[^ ]*\).*/\1/p')
+	if [ -z "$have" ]; then
+		echo "install.sh: $1 needs Xymon $want or newer, and the version of $DESTDIR$XYMONHOME/bin/xymon could not be read: not checked" >&2
+	elif older "$have" "$want"; then
+		[ -n "$FORCE" ] || die "$1 needs Xymon $want or newer, and this server's is $have: --force installs it anyway"
+		echo "install.sh: $1 needs Xymon $want or newer, and this server's is $have: installed anyway, as --force asks" >&2
+	elif [ "$have" != "${have%%-*}" ] && ! older "$want" "${have%%-*}"; then
+		echo "install.sh: $1 needs Xymon $want or newer, and this server's is $have, on the way to $want: not checked" >&2
+	fi
+	return 0
 }
 
 need_home() {
@@ -436,6 +478,7 @@ deepest_first() {
 case $ACTION in
 	install|install-server)
 		need_home
+		for n in $LIST; do xymon_ok "$n"; done
 		for n in $LIST; do install_server "$n"; done ;;
 	install-tools)
 		for n in $LIST; do install_tools "$n"; done ;;
