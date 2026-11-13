@@ -80,9 +80,9 @@ says whose:
 - Python 3.9 or later, with the modules in
   [`requirements.txt`](requirements.txt): how the install finds or makes a
   Python with them is in the [top README](../README.md#installing-a-plugin).
-- `rrdtool`, for `/series`; a web server running Xymon's CGI programs at
-  `XYMONSERVERCGIURL`, for `/graphs`; Apache's `htpasswd`, when a password
-  file is used.
+- `rrdtool`, for `/series`; Xymon's `showgraph.cgi` in `$XYMONHOME/bin`, for
+  `/graphs`, or else a web server running Xymon's CGI programs at
+  `XYMONSERVERCGIURL`; Apache's `htpasswd`, when a password file is used.
 
 ## On the Xymon server
 
