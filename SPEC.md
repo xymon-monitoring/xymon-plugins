@@ -85,7 +85,9 @@ before it installs any:
   it may lack what came before that release.
 
 A plugin that needs a newer Xymon for one feature alone says so in its README
-instead.
+instead. Whatever the version, `install-server` says so when the server's
+`xymonserver.cfg` does not read `xymonserver.d/`, where the plugins'
+settings go: a configuration kept from before 4.3.31 ignores them.
 
 **S4. A plugin has its side.**
 The Xymon server (`server-*` lines: files under `$XYMONHOME/ext/NAME/`, a

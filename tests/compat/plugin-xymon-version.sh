@@ -82,4 +82,23 @@ try xymonapi
 [ "$rc" -eq 0 ] || fail "[S14] xymonapi refused where Xymon's version cannot be read: $(tail -n 3 "$work/log")"
 assert_contains "could not be read: not checked" "$(cat "$work/log")" "[S14] and it says the version was not checked"
 
+# A xymonserver.cfg that does not read xymonserver.d/, as one kept from
+# before 4.3.31: the install says so, and how to fix it; one that does, or
+# none at all, nothing.
+server 4.3.31
+mkdir -p "$h/etc"
+echo 'XYMONSERVERHOSTNAME="x"' > "$h/etc/xymonserver.cfg"
+try xymonapi
+[ "$rc" -eq 0 ] || fail "[S14] the install failed over a xymonserver.cfg without xymonserver.d: $(tail -n 3 "$work/log")"
+assert_contains "does not read xymonserver.d/" "$(cat "$work/log")" "[S14] the install says xymonserver.cfg ignores the plugins' settings"
+assert_contains "optional directory $h/etc/xymonserver.d" "$(cat "$work/log")" "[S14] and gives the line to add"
+for line in "optional directory $h/etc/xymonserver.d" "directory $h/etc/xymonserver.d" \
+	"directory $h/etc/xymonserver.d/" "directory xymonserver.d" "  optional   directory   xymonserver.d/  "; do
+	server 4.3.31
+	mkdir -p "$h/etc"
+	printf 'XYMONSERVERHOSTNAME="x"\n%s\n' "$line" > "$h/etc/xymonserver.cfg"
+	try xymonapi
+	assert_not_contains "does not read xymonserver.d" "$(cat "$work/log")" "[S14] nothing said when xymonserver.cfg has: $line"
+done
+
 pass "install-server refuses a plugin whose xymon: line is newer than the server's Xymon, and one that needs it, unless --force; -dev counts as its release, versions compare by number, and an unreadable version installs with a warning"

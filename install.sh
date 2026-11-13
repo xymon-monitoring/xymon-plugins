@@ -159,6 +159,18 @@ xymon_ok() {
 	return 0
 }
 
+# reads_d -- say when the server's xymonserver.cfg does not read
+# xymonserver.d/, where the plugins' settings go: a configuration kept from
+# before 4.3.31 would ignore them all, without a word.
+reads_d() {
+	c=$DESTDIR$XYMONHOME/etc/xymonserver.cfg
+	[ -f "$c" ] || return 0
+	grep -q '^[[:space:]]*\(optional[[:space:]]\{1,\}\)\{0,1\}directory[[:space:]]\{1,\}\(.*/\)\{0,1\}xymonserver\.d/\{0,1\}[[:space:]]*$' "$c" && return 0
+	echo "install.sh: $c does not read xymonserver.d/, where the plugins' settings go: add the line" >&2
+	echo "  optional directory $XYMONHOME/etc/xymonserver.d" >&2
+	echo "as Xymon's own xymonserver.cfg has it since 4.3.31" >&2
+}
+
 need_home() {
 	[ -n "$XYMONHOME" ] || die "XYMONHOME is not set: XYMONHOME=<the Xymon server directory> ./install.sh $ACTION [PLUGIN...]"
 }
@@ -479,6 +491,7 @@ case $ACTION in
 	install|install-server)
 		need_home
 		for n in $LIST; do xymon_ok "$n"; done
+		reads_d
 		for n in $LIST; do install_server "$n"; done ;;
 	install-tools)
 		for n in $LIST; do install_tools "$n"; done ;;
