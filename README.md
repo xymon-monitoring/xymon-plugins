@@ -14,6 +14,7 @@ checks/NAME/      one check: its script, its clientlaunch.cfg stanza, README
 install.sh        installs, updates and removes the plugins, on either side
 tests/            how the plugins fit together (compat/), the eval set, helpers
 build/            CI's helpers: the contract check
+SPEC.md           the rules of the plugin model, each enforced by a test
 UPGRADING.md      what a change that breaks something asks of you
 CONTRIBUTING.md   how a change is made and reviewed; AGENTS.md, what a coding agent adds
 ```
@@ -51,50 +52,24 @@ start, and reaches the server as each plugin's README says.
 
 ## What a plugin is
 
-A directory under `plugins/` whose `PLUGIN` file says what it is and what
-`install.sh` does with it:
-
-- its name and version, a summary, the plugins it needs, which are installed
-  first;
-- its **sides**: `server-*` lines for what runs on the Xymon server, as a
-  xymonlaunch task under `$XYMONHOME/ext`, documented in a section 8 manual
-  page; `tools-*` lines for the commands a person runs on their own machine,
-  under `~/.local`, documented in section 1. A plugin has one side or both;
-  a side for a monitored host comes with the first check that migrates;
-- the files of each side, the Python modules each needs beyond the standard
-  library, the task file and web server snippets the server side installs,
-  the messages the install prints.
-
-The install writes the version beside the installed files, in `VERSION`.
-The version changes when compatibility does, and a change that breaks
-something gets an entry in [`UPGRADING.md`](UPGRADING.md). How versions
-move, how a change is made, tested and reviewed, is in
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+A directory under `plugins/` with a `PLUGIN` file, whose comments name every
+key. What a plugin is, where it installs, and what installing, updating and
+removing it guarantee are the rules of [`SPEC.md`](SPEC.md); how versions
+move and how a change is made is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Conventions
 
-- **Branches.** `stable` is the newest code every test passed, which CI
-  moves forward; `main` holds every change as it lands. Install from
-  `stable`.
 - **Install actions** name the side: `install-server`, `uninstall-server`,
   `venv-server` on the Xymon server; `install-tools`, `uninstall-tools`,
   `venv-tools` on your own machine. `install-client` is refused, naming
   `install-tools`: a client is Xymon's, on a monitored host, and the action
   of that name arrives with the first check that installs there.
-- **Words.** "Client" is Xymon's client; a program that calls the Xymon API
-  is an API client; Claude Code, Codex, opencode and the like are AI tools.
 - **Manual pages.** Section 8 for what runs on the server, section 1 for the
   commands; every behaviour and setting is in the page, the README says how
   to install and use.
 - **Tests.** Each plugin's under its `tests/`; how the plugins fit together
-  under `tests/compat/`. A test says at its top what it checks and what it
-  needs, skips with 77 when it cannot run here, and CI runs them all with
-  nothing missing ([`.github/workflows/test.yml`](.github/workflows/test.yml)):
-
-  ```sh
-  XYMON_SRC=/path/to/built/xymon tests/run.sh                    # every test
-  XYMON_SRC=/path/to/built/xymon tests/run.sh plugins/NAME/tests # one plugin's
-  ```
+  under `tests/compat/`. How to run them is in
+  [`CONTRIBUTING.md`](CONTRIBUTING.md#tests).
 
 ## Getting the code
 
