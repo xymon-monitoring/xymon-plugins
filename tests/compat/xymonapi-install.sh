@@ -6,8 +6,8 @@
 # ./install.sh install-server -- install, its older spelling, as well -- puts
 # the API, with its client, in $XYMONHOME/ext/xymonapi/,
 # the search beside it, its manual page in man8/, and its task in
-# $XYMONHOME/etc/tasks.d/xymonapi -- disabled, with ENVFILE naming that
-# server's xymonserver.cfg. An install over one where the admin enabled the
+# $XYMONHOME/ext/xymonapi/tasks.cfg, linked from etc/tasks.d/xymonapi --
+# disabled, with ENVFILE naming that server's xymonserver.cfg. An install over one where the admin enabled the
 # task leaves that file alone: putting DISABLED back would stop the API at
 # the next upgrade, with nothing to say why. Without XYMONHOME it installs
 # nothing and says so. The Apache snippet goes to $XYMONHOME/etc, kept too
@@ -68,7 +68,7 @@ grep -q '^[[:space:]]*DISABLED$' "$task" || fail "the task is not shipped DISABL
 grep -q "^[[:space:]]*ENVFILE $home/etc/xymonserver.cfg\$" "$task" \
 	|| fail "ENVFILE does not name this server's xymonserver.cfg: $(grep ENVFILE "$task")"
 grep -q '@XYMONHOME@' "$task" && fail "@XYMONHOME@ was left unreplaced in $task"
-mode=$(ls -l "$task" | cut -c1-10)
+mode=$(ls -lL "$task" | cut -c1-10)
 assert_equal "-rw-r--r--" "$mode" "the task file's mode under umask 077"
 
 # An update replaces each plugin's directory: a file the new version no
@@ -183,7 +183,7 @@ done
 "$ROOT/install.sh" uninstall XYMONHOME="$home" MANDIR="$work/man" >"$work/uninstall.log" 2>&1 \
 	|| fail "install.sh uninstall-server failed: $(tail -n 5 "$work/uninstall.log")"
 for f in ext/xymonapi ext/xymonapi-mcp ext/xymonapi-rag etc/tasks.d/xymonapi etc/tasks.d/xymonapi-rag; do
-	[ -e "$home/$f" ] && fail "install.sh uninstall-server left $f"
+	if [ -e "$home/$f" ] || [ -L "$home/$f" ]; then fail "install.sh uninstall-server left $f"; fi
 done
 [ -e "$work/man/man8/xymonapi.8" ] && fail "install.sh uninstall-server left the manual page xymonapi.8"
 [ -e "$work/man/man1/xymonapi-rag.1" ] && fail "install.sh uninstall-server left the manual page xymonapi-rag.1"
