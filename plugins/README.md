@@ -82,7 +82,8 @@ then needs a module it lacks says which, and what installs it.
 changes nothing until you remove that line from its file,
 `ext/NAME/tasks.cfg` -- or `etc/tasks.d/NAME`, the link to it; xymonlaunch
 notices and starts it. A later install leaves the task file as you left
-it.
+it, and where an editor replaced the link by a file of its own, as
+`sed -i` does, moves that file into `ext/NAME` and puts the link back.
 
 **Updating.** Run the same install again, from an updated checkout or a
 fresh `/plugins` download. The server install replaces the plugin's code and

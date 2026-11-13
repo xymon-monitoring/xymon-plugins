@@ -9,9 +9,12 @@
 # longer has the task, and says nothing about the link that points nowhere.
 # The next uninstall-server removes that link. A task file an older install
 # copied into tasks.d -- one an admin may have enabled -- is moved into the
-# plugin's directory, as it was, and replaced by the link; a link to
-# something else at tasks.d/PLUGIN is left alone. Under DESTDIR, the link
-# names the installed task file.
+# plugin's directory, as it was, and replaced by the link. So is the regular
+# file an editor that writes by renaming leaves where the link was: it is
+# the one xymonlaunch reads, and the next install keeps it rather than fail
+# on it. A link to something else at tasks.d/PLUGIN is left alone, and the
+# install refuses before it replaces anything. Under DESTDIR, the link names
+# the installed task file.
 #
 # Installed into a scratch directory; xymonlaunch is the one built in the
 # Xymon tree in XYMON_SRC, run with --dump, so no task runs.
@@ -63,13 +66,32 @@ install migrate
 cmp -s "$work/enabled" "$home/ext/xymonapi/tasks.cfg" || fail "[S6] the older install's task file was not moved as it was"
 assert_contains "moved to" "$(cat "$work/migrate.log")" "the install says it moved the task file"
 
-# A link to something else is left alone.
+# The link replaced by a regular file, as "sed -i" or an editor that writes
+# by renaming does when the admin enables the task through tasks.d: the
+# file xymonlaunch reads is the one kept, not the copy still DISABLED in
+# the plugin's directory, and a second install finds nothing left to do.
+"$ROOT/install.sh" uninstall-server xymonapi XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || true
+install relink
+grep -q '^[[:space:]]*DISABLED$' "$home/ext/xymonapi/tasks.cfg" || fail "a first install did not write the task DISABLED"
+grep -v '^[[:space:]]*DISABLED$' "$link" > "$link.new"
+mv "$link.new" "$link"
+if [ -L "$link" ]; then fail "the test did not replace the link by a regular file"; fi
+cp "$link" "$work/renamed"
+install renamed
+[ -L "$link" ] || fail "[S6] the regular file that replaced the link was not replaced by the link"
+cmp -s "$work/renamed" "$home/ext/xymonapi/tasks.cfg" || fail "[S6] the file xymonlaunch was reading was not the one kept"
+if [ -e "$home/ext/.xymonapi.tasks.cfg" ]; then fail "the task file set aside was left in ext/"; fi
+install renamed-again
+cmp -s "$work/renamed" "$home/ext/xymonapi/tasks.cfg" || fail "[S6] a second install did not keep the enabled task file"
+
+# A link to something else is left alone, and nothing is installed around it.
 "$ROOT/install.sh" uninstall-server xymonapi XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || true
 ln -s /elsewhere "$link"
 rc=0
 "$ROOT/install.sh" install-server xymonapi XYMONHOME="$home" MANDIR="$work/man" >"$work/foreign.log" 2>&1 || rc=$?
 [ "$rc" -ne 0 ] || fail "[S6] install-server over a link to something else succeeded"
 assert_equal /elsewhere "$(readlink "$link")" "[S6] the link to something else is left as it was"
+if [ -e "$home/ext/xymonapi" ]; then fail "[S6] install-server refused the link to something else after installing ext/xymonapi"; fi
 
 # Staged for a package: the link names where the task file will be, not
 # where DESTDIR puts it.
@@ -78,4 +100,4 @@ assert_equal /elsewhere "$(readlink "$link")" "[S6] the link to something else i
 assert_equal /usr/lib/xymon/server/ext/xymonapi/tasks.cfg "$(readlink "$work/stage/usr/lib/xymon/server/etc/tasks.d/xymonapi")" \
 	"[S6] under DESTDIR the link names the installed task file"
 
-pass "a plugin's task lives in ext/PLUGIN and is linked from tasks.d: removing ext/PLUGIN takes it from xymonlaunch silently, uninstall-server removes the link left, an older copy is moved as it was, a foreign link is left alone, and under DESTDIR the link names the installed path"
+pass "a plugin's task lives in ext/PLUGIN and is linked from tasks.d: removing ext/PLUGIN takes it from xymonlaunch silently, uninstall-server removes the link left, an older copy and a file that replaced the link are moved as they were, a foreign link is left alone before anything is installed, and under DESTDIR the link names the installed path"

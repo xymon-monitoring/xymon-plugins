@@ -83,10 +83,12 @@ A plugin's task is installed `DISABLED`; the install says how to enable it.
 
 **S6. A plugin's task lives in its directory.**
 It is `ext/NAME/tasks.cfg`, and `etc/tasks.d/NAME` is a link to it; under
-`DESTDIR` the link names the installed file. A task file an older install
-copied into `tasks.d` is moved into the plugin's directory as it was, and
-replaced by the link. A link at `tasks.d/NAME` to something else is left as
-it is, and the install refused.
+`DESTDIR` the link names the installed file. A regular file at
+`tasks.d/NAME` -- a copy an older install made, or the file an editor left
+in place of the link -- is the one xymonlaunch reads: it is moved into the
+plugin's directory as it was, and replaced by the link. A link at
+`tasks.d/NAME` to something else is left as it is, and the install refused
+before it installs anything.
 
 **S7. An update replaces the code and keeps the choices.**
 Installing again replaces the plugin's directory as a whole, so a file a
