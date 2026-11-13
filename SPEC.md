@@ -114,8 +114,8 @@ before it installs anything, `enable-server` and `disable-server` refused.
 **S7. An update replaces the code and keeps the choices.**
 Installing again replaces the plugin's directory as a whole, so a file a
 newer version no longer ships is gone; it keeps the task file as the
-administrator left it, whether it is on, and a web server snippet once
-written.
+administrator left it, whether it is on, and the web server snippets as the
+administrator edited them.
 
 **S8. Removing takes away the plugin and its links.**
 The removal takes away the plugin's directory, its task link and its manual
@@ -127,8 +127,16 @@ says nothing of the link left pointing nowhere; the next removal takes that
 link away.
 
 **S10. The administrator's data outlives the plugin.**
-The removal keeps the web server snippets and the API's tokens file, and
-says what it kept and how to remove it.
+The removal keeps the API's tokens file, and says what it kept.
+
+**S16. A plugin's web server snippet lives in its directory.**
+A snippet the `conf:` line of `PLUGIN` names is installed in `ext/NAME/`,
+and the web server is told to include it in a way that skips it once it is
+gone: `IncludeOptional` on Apache, a wildcard `include` on nginx and
+lighttpd. Removing the plugin, or deleting `ext/NAME`, removes it, and the
+web server still starts. A snippet an older install wrote in `etc/` is left
+there, since a web server may still include it, and copied, edits and all,
+into `ext/NAME` by the next install, which says so.
 
 **S13. A plugin is on when its link is there.**
 A plugin's task is on when `etc/tasks.d/NAME` links to its task file, and
@@ -188,14 +196,12 @@ brings its test.
 - **Removing the directory by hand removes everything of the plugin.**
   Beyond the task (S9), what each program reads it reads through the place
   below, so that after `ext/NAME` is deleted Xymon no longer applies the
-  plugin's settings, the web server still starts, without its snippet, and
-  the API no longer serves it:
+  plugin's settings, and the API no longer serves it:
 
   | What | Lives in | Seen by its reader through |
   |---|---|---|
   | settings | `ext/NAME/xymonserver.cfg` | a link in `etc/xymonserver.d/`, which Xymon reads after `xymonserver.cfg` |
   | manual page | `ext/NAME/` | a link in `MANDIR` |
-  | web server snippet | `ext/NAME/` | an include the web server skips when the file is gone (`IncludeOptional` for Apache, a wildcard `include` for nginx) |
   | what `/plugins` serves | `ext/NAME/`, the release archive it was installed from | the API, serving that archive at `/plugins/NAME` |
   | Python modules | `ext/NAME/venv/` | the plugin's own launcher |
 
