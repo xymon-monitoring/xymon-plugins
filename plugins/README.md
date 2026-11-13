@@ -53,7 +53,9 @@ Xymon's, on a monitored host, and nothing installs one there yet.
 | the Xymon server | the Xymon server, as the user that may write its directory, usually root | `XYMONHOME=/usr/lib/xymon/server ./install.sh install-server NAME` | the code in `$XYMONHOME/ext/NAME/`, its task in `ext/NAME/tasks.cfg`, off until enabled, its manual page under `MANDIR` (`/usr/share/man`) |
 | your own machine | any machine that reads the API, the server included, as yourself | `./install.sh install-tools NAME` | the code in `$PREFIX/libexec/xymon-plugins/NAME/`, its command in `$PREFIX/bin`, its manual page in `$PREFIX/share/man/man1`; `PREFIX` is `~/.local` |
 
-A plugin that needs another installs it first, so one command is enough,
+A plugin that needs a newer Xymon than the server's, by the `xymon:` line of
+its `PLUGIN`, is refused, naming both versions; `--force` installs it
+anyway. A plugin that needs another installs it first, so one command is enough,
 and with no `NAME` the same two commands install every plugin of a side.
 Settings are taken from the environment or as `NAME=value` arguments. `DESTDIR` stages either side for a package. The server install also
 copies each plugin into what the API serves at `/plugins`, for other

@@ -69,6 +69,24 @@ Its `needs:` line names them; the install of a plugin installs them with it,
 and its removal is refused while an installed plugin needs it, naming that
 plugin.
 
+**S14. A plugin names the Xymon it needs.**
+A `xymon:` line in `PLUGIN`, `X.Y.Z`, gives the lowest Xymon version the
+plugin's server side works with. `install-server` compares it with what
+`$XYMONHOME/bin/xymon --version` gives, for the plugin and each it needs,
+before it installs any:
+
+- older: refused, naming both versions, unless `--force` is given, which
+  installs it and says so. A distribution may carry a feature back to an
+  older number, and the administrator may know it does;
+- not known, because the version cannot be read: installed, with a warning
+  that it could not be checked;
+- a development version, `4.3.32-dev`, comes after `4.3.31` and before
+  `4.3.32`: a plugin that needs `4.3.32` installs on it with a warning, as
+  it may lack what came before that release.
+
+A plugin that needs a newer Xymon for one feature alone says so in its README
+instead.
+
 **S4. A plugin has its side.**
 The Xymon server (`server-*` lines: files under `$XYMONHOME/ext/NAME/`, a
 xymonlaunch task, a section 8 manual page) and your own machine (`tools-*`
@@ -152,14 +170,6 @@ brings its test.
   does not run on a terminal, so that a script never acts on a side it did
   not name. Run with no verb on a terminal, it asks what to do. It is POSIX
   `sh` and needs no `make`.
-- **A plugin names the Xymon it needs.** A `xymon:` line in `PLUGIN` gives
-  the lowest Xymon version the plugin works with. `install` compares it with
-  the Xymon of the side: older, refused, naming both versions, unless
-  `--force` is given, which installs it and says so, as a distribution may
-  carry a feature back to an older number; not known, installed with a
-  warning that it could not be checked; a development version, `4.3.32-dev`,
-  counts as the release it leads to. A plugin that needs a newer Xymon for
-  one feature alone says so in its README instead.
 - **`status` says what is installed.** For each plugin of a side: whether it
   is installed, its version from `VERSION`, whether it is on, and, against a
   checkout, whether a newer version is there.
