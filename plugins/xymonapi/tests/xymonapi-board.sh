@@ -5,8 +5,8 @@
 #
 # The API reports the board a running xymond holds: a status sent to xymond
 # comes back from /states with its colour turned into a verdict, a red one is
-# listed in /alarms and a green one is not, and /health names the xymond it
-# asked. An operation the API does not implement answers 404 rather than
+# listed in /alarms and a green one is not, a state says when it is
+# acknowledged, and /health names the xymond it asked. An operation the API does not implement answers 404 rather than
 # sample data.
 #
 # Skips where the API cannot run (tests/lib/xymonapi.sh). Needs a built Xymon
@@ -95,6 +95,14 @@ assert_contains '"verdict":"critical"' "$red" "a red status is a critical verdic
 
 green=$(api_get '/states?entity=green.example.com&test=conn')
 assert_contains '"verdict":"ok"' "$green" "a green status is an ok verdict"
+
+# /states says when an acknowledgement runs, and only then: a page that
+# draws the board picks its icon by it.
+acked=$(api_get '/states?entity=disk.example.com&test=disk')
+assert_contains '"acknowledged":true' "$acked" "/states marks a status whose acknowledgement runs"
+assert_not_contains '"acknowledged"' "$red" "an acknowledgement that ran out is not marked, though xymond still carries it"
+assert_not_contains '"acknowledged"' "$green" "a status nobody acknowledged is not marked"
+assert_not_contains '"acknowledged"' "$(api_get '/states?entity=dis.example.com&test=conn')" "nor is a disabled one"
 
 alarms=$(api_get /alarms)
 assert_contains '"id":"red.example.com:conn"' "$alarms" "a red status is an alarm"

@@ -32,7 +32,7 @@ XYMONSERVERCGIURL = os.environ.get("XYMONSERVERCGIURL", "").rstrip("/")
 XYMONWEBHOST = os.environ.get("XYMONWEBHOST", "").rstrip("/")
 XYMONHISTDIR = os.environ.get("XYMONHISTDIR", "")
 XYMONHISTLOGS = os.environ.get("XYMONHISTLOGS", "")
-BOARD_FIELDS = ["hostname", "testname", "color", "lastchange"]
+BOARD_FIELDS = ["hostname", "testname", "color", "lastchange", "acktime"]
 
 # A name from the request becomes part of a file path, so it may not hold
 # "/" or "..": a path outside XYMONRRDS. A host name never holds ":" either;
@@ -104,6 +104,12 @@ def _iso(epoch: str) -> str | None:
         return None
 
 
+def _acked(acktime: str) -> bool:
+    """Whether an acknowledgement is running: xymond clears one that ran out
+    only when the next status arrives, so the time is compared with now."""
+    return bool(_DIGITS.fullmatch(acktime)) and int(acktime) > time.time()
+
+
 def states(entity: str | None = None, test: str | None = None,
            verdict: str | None = None) -> list[dict]:
     """One State per host and test on the board."""
@@ -115,6 +121,10 @@ def states(entity: str | None = None, test: str | None = None,
         t = _iso(d.get("lastchange", ""))
         if t:
             st["time"] = t
+        # Present only while an acknowledgement runs. A disabled test needs
+        # no flag of its own: xymond makes it blue, which is its verdict.
+        if _acked(d.get("acktime", "")):
+            st["acknowledged"] = True
         out.append(st)
     if entity:
         out = [s for s in out if s["entity"] == entity]

@@ -431,6 +431,7 @@ components:
         test:    { type: string }
         verdict: { $ref: "#/components/schemas/Status" }
         time:    { type: string, format: date-time, description: "When the verdict last changed." }
+        acknowledged: { type: boolean, description: "Present, and true, while an acknowledgement runs." }
 
     Alarm:
       type: object
