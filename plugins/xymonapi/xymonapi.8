@@ -92,7 +92,9 @@ other operations need neither.
 The code of the plugins installed on this server, for other machines to
 install from at this server's versions: a gzipped tar rooted at
 xymon-plugins/, laid out as the repository is -- plugins/NAME for each
-plugin installed here, without its tests, with install.sh and LICENSE.
+plugin installed here, holding only what its PLUGIN file names: itself,
+README.md, its files, manual pages, task and snippets; no test, and no
+other file left beside them -- with install.sh and LICENSE.
 \fB./install.sh install-tools NAME\fR there installs that plugin.
 Each plugin's \fB./install.sh install-server\fR stages its directory in
 $XYMONHOME/ext/xymon-plugins-dist/, which is what /plugins packs, and its

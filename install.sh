@@ -242,10 +242,14 @@ fresh() { rm -rf "$1" && mkdir -p "$1"; }
 # copy PLUGIN SIDE DIR -- the side's files into DIR, executable or not.
 copy() {
 	exe=" $(field "$1" executable) "
+	set -f
 	for f in $(field "$1" "$2-files"); do
+		plain "$f" || die "$1's PLUGIN file names '$f' to install, which is no file of its own directory"
+		[ ! -L "$ROOT/plugins/$1/$f" ] || die "$1's $f is a link, which is not installed"
 		cp -f "$ROOT/plugins/$1/$f" "$3/" || exit 1
-		case $exe in *" $f "*) chmod 755 "$3/$f" ;; *) chmod 644 "$3/$f" ;; esac
+		case $exe in *" $f "*) chmod 755 "$3/$f" ;; *) chmod 644 "$3/$f" ;; esac || exit 1
 	done
+	set +f
 }
 
 # version PLUGIN DIR -- the plugin's version, in DIR/VERSION. Installed from
@@ -263,17 +267,101 @@ manual() {
 	mkdir -p "$3/man${2##*.}" && cp -f "$ROOT/plugins/$1/$2" "$3/man${2##*.}/" && chmod 644 "$3/man${2##*.}/$2"
 }
 
-# dist PLUGIN -- stage the plugin's directory under $DIST/plugins, as it is
-# in the repository but for its tests, with this script and LICENSE beside:
-# a machine unpacking it runs ./install.sh install-tools there, at the
-# server's versions. Links are copied as links, as in the repository.
+# declared PLUGINFILE -- the names a PLUGIN file gives to stage, one per
+# line: itself, README.md, each side's files and manual page, the task and
+# the snippets. Read with globbing off; the callers check each is a plain
+# name of the plugin's own directory.
+declared() {
+	echo PLUGIN
+	echo README.md
+	for k in server-files tools-files server-manual tools-manual task conf; do
+		sed -n "s/^$k: //p" "$1" | tr ' ' '\n'
+	done
+}
+
+# plain NAME -- true when NAME is a file name of a plugin's own directory:
+# not empty, ., .., nor holding a /.
+plain() {
+	case $1 in ""|.|..|*/*) return 1 ;; esac
+	return 0
+}
+
+# dist PLUGIN -- stage under $DIST/plugins what a machine needs to install
+# the plugin, with this script and LICENSE beside: a machine unpacking it
+# runs ./install.sh install-tools there, at the server's versions. Only
+# what the PLUGIN file names is staged, each a plain file of the plugin's
+# directory and no link, so that a file left beside them in the checkout,
+# a note, a key, a build's leftover, is not served to anyone by /plugins.
+# The stage is pruned first, then the plugin built beside its old copy
+# and moved into place, so that a failure leaves the old copy whole.
 dist() {
-	rm -rf "$DIST/plugins/$1"
-	mkdir -p "$DIST/plugins"
-	cp -R "$ROOT/plugins/$1" "$DIST/plugins/$1"
-	rm -rf "$DIST/plugins/$1/tests"
-	find "$DIST/plugins/$1" -name __pycache__ -prune -exec rm -rf {} +
-	cp -f "$ROOT/install.sh" "$ROOT/LICENSE" "$DIST/"
+	prune_dist
+	d=$DIST/plugins/$1
+	new=$DIST/plugins/.$1.new
+	exe=" $(field "$1" executable) "
+	mkdir -p "$new" || exit 1
+	set -f
+	for f in $(declared "$ROOT/plugins/$1/PLUGIN"); do
+		plain "$f" || die "$1's PLUGIN file names '$f' to stage, which is no file of its own directory"
+		src=$ROOT/plugins/$1/$f
+		if [ "$f" = README.md ] && [ ! -e "$src" ]; then continue; fi
+		[ ! -L "$src" ] || die "$1's $f is a link, which /plugins does not serve"
+		cp -f "$src" "$new/" || exit 1
+		case $exe in *" $f "*) chmod 755 "$new/$f" ;; *) chmod 644 "$new/$f" ;; esac || exit 1
+	done
+	set +f
+	rm -rf "$d" || die "could not replace $d"
+	mv "$new" "$d" || die "could not replace $d"
+	rm -f "$DIST/install.sh" "$DIST/LICENSE" || die "could not replace $DIST/install.sh and LICENSE"
+	cp -f "$ROOT/install.sh" "$ROOT/LICENSE" "$DIST/" || exit 1
+	chmod 755 "$DIST/install.sh" && chmod 644 "$DIST/LICENSE" || exit 1
+}
+
+# prune_dist -- what /plugins serves holds nothing else: at the top only
+# install.sh and LICENSE, files, and plugins/, a directory, none a link; in
+# plugins/ only the directories of plugins installed here, each with a
+# PLUGIN file holding plain names, and holding only the files it names.
+# An install before this one staged a plugin's whole source directory,
+# whatever lay in it, and a plugin since renamed or gone leaves a copy that
+# no install of this one rewrites. A removal that fails stops the run: a
+# file left would still be served.
+prune_dist() {
+	[ -e "$DIST" ] || [ -L "$DIST" ] || return 0
+	if [ -L "$DIST" ] || [ ! -d "$DIST" ]; then
+		rm -rf "$DIST" || die "could not remove $DIST"
+		return 0
+	fi
+	for e in "$DIST"/* "$DIST"/.[!.]* "$DIST"/..?*; do
+		[ -e "$e" ] || [ -L "$e" ] || continue
+		case ${e##*/} in
+			install.sh|LICENSE) [ -f "$e" ] && [ ! -L "$e" ] && continue ;;
+			plugins) [ -d "$e" ] && [ ! -L "$e" ] && continue ;;
+		esac
+		rm -rf "$e" || die "could not remove $e, which /plugins would serve"
+	done
+	for p in "$DIST"/plugins/* "$DIST"/plugins/.[!.]* "$DIST"/plugins/..?*; do
+		[ -e "$p" ] || [ -L "$p" ] || continue
+		if [ -L "$p" ] || [ ! -d "$p" ] || [ ! -f "$p/PLUGIN" ] || [ -L "$p/PLUGIN" ] \
+			|| [ ! -f "$EXTROOT/${p##*/}/VERSION" ]; then
+			rm -rf "$p" || die "could not remove $p, which /plugins would serve"
+			continue
+		fi
+		set -f
+		keep=" "
+		for f in $(declared "$p/PLUGIN"); do
+			if plain "$f"; then keep="$keep$f "; else keep=; break; fi
+		done
+		set +f
+		if [ -z "$keep" ]; then
+			rm -rf "$p" || die "could not remove $p, which /plugins would serve"
+			continue
+		fi
+		for e in "$p"/* "$p"/.[!.]* "$p"/..?*; do
+			[ -e "$e" ] || [ -L "$e" ] || continue
+			case $keep in *" ${e##*/} "*) [ -f "$e" ] && [ ! -L "$e" ] && continue ;; esac
+			rm -rf "$e" || die "could not remove $e, which /plugins would serve"
+		done
+	done
 }
 
 # ours PLUGIN -- refuse a tasks.d/PLUGIN that is a link to something other
@@ -499,7 +587,7 @@ venv() {
 DONE=
 install_server() {
 	case " $DONE " in *" $1 "*) return 0 ;; esac
-	for n in $(field "$1" needs); do install_server "$n"; done
+	for n in $(field "$1" needs); do known "$n"; install_server "$n"; done
 	[ -n "$(field "$1" server-files)" ] || die "$1 has nothing to install on the server"
 	ext=$EXTROOT/$1
 	# Refused before anything is replaced, not halfway through.
@@ -525,7 +613,7 @@ install_server() {
 
 install_tools() {
 	case " $DONE " in *" $1 "*) return 0 ;; esac
-	for n in $(field "$1" needs); do install_tools "$n"; done
+	for n in $(field "$1" needs); do known "$n"; install_tools "$n"; done
 	[ -n "$(field "$1" tools-files)" ] || die "$1 has nothing to install on your own machine"
 	dir=$TOOLSROOT/$1
 	fresh "$dir" || exit 1
