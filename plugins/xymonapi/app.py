@@ -177,6 +177,14 @@ def _entities(request):
     return JSONResponse({"items": items})
 
 
+def _pages(request):
+    try:
+        tree = xymon.pages()
+    except Exception as exc:                        # noqa: BLE001
+        return _upstream(exc)
+    return JSONResponse(tree)
+
+
 def _status(request):
     q = request.query_params
     try:
@@ -439,6 +447,7 @@ ROUTES = {
     "/states": _states,
     "/alarms": _alarms,
     "/entities": _entities,
+    "/pages": _pages,
     "/status": _status,
     "/series": _series,
     "/graphs": _graphs,

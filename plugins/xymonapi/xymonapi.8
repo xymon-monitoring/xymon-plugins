@@ -67,6 +67,27 @@ nodata and purple unknown.
 Every state whose verdict is not ok.
 .IP "\fB/entities\fR"
 Each host on the board, once.
+.IP "\fB/pages\fR"
+The pages of
+.I hosts.cfg(5),
+which xymond does not keep: the top page with its subpages inside it, each
+with its name, its title, its path from the top, and its groups; a group
+with its title, its hosts in the file's order, and the columns of a
+group-only or a group-except; a title line as the pretitle of the page,
+group or host after it. The hosts a page lists before any group are a group
+with no title. Beside them, by host name, what the file says of a host: the
+NAME, COMMENT and DESCR tags, and the pretitle. A host with nodisp is in no
+group. As
+.I xymongen(1)
+does, a subpage before any page and a subparent whose parent page has not
+come yet are left out, and the hosts after them stay where they were. The file
+is asked of xymond with its \fBconfig\fR command, which gives
+$XYMONHOME/etc/hosts.cfg with the \fBinclude\fR and \fBdirectory\fR lines
+followed, so it is the one xymond runs with. A \fBdispinclude\fR line, which
+only xymongen follows, is not: the pages of such a file are not in the
+answer. xymond answers \fBconfig\fR to the addresses it takes status
+messages from, so an xymond started with \fB\-\-status\-senders\fR must allow
+this machine's.
 .IP "\fB/status\fR \fBentity\fR=HOST \fBtest\fR=TEST"
 The current status of HOST's TEST, from xymondboard: its verdict, when it
 last changed (time) and was last reported (updated), and its text -- what
