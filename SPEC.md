@@ -190,39 +190,43 @@ brings its test.
   ./xymon-plugin status
   ```
 
-  With no plugin named, a verb acts on every plugin of the instance it
-  targets (below). `--server`, `--client` or `--tools` names the side, and
-  must when the command does not run on a terminal, so that a script never
-  acts on a side it did not name. It is POSIX `sh` and needs no `make`.
-- **The target is an instance, never a guess among several.** An instance
-  is a Xymon tree, a `XYMONHOME`, and the role it plays: a server, marked by
-  `etc/xymonserver.cfg`, or a client, marked by `etc/xymonclient.cfg` and
-  `etc/clientlaunch.cfg`. A machine may hold several -- the packaged server,
-  one built from source to test, two versions side by side, the server's own
-  client -- each with its `ext/`, its `tasks.d` and its
-  `bin/xymon --version`. The command finds them in the `XYMONHOME` given,
-  in the trees of the running `xymond` and `xymonlaunch`, in the packages'
-  usual paths and under the `xymon` user's home. `XYMONHOME` is set only in
-  Xymon's own environment -- `xymoncmd`, xymonlaunch, the client, which sets
-  it to the client's tree -- so it is checked, not trusted: one with neither
-  mark is refused, naming what is missing, and a client's is never taken for
-  a server's. With one instance found, it is the default; with several, they
-  are listed with role, version and whether running, `XYMONHOME` picks one,
-  and otherwise the command asks with no default, or, off a terminal,
-  refuses until `XYMONHOME` or `--home` names one. Your own machine is one
-  per person, under `PREFIX`, and needs none of this.
-- **`status` tells of every instance found**, not only the one targeted, so
-  that two installs of Xymon on one machine are compared at a glance.
+  With no plugin named, a verb acts on every plugin of the installation it
+  targets (below). `--tools` asks for your own commands, under `PREFIX`; a
+  server or client profile is the one the targeted installation's kind
+  says. It is POSIX `sh` and needs no `make`.
+- **A run acts on one Xymon installation, which `XYMONHOME` alone names.**
+  An installation is a Xymon tree, a server's, marked by
+  `etc/xymonserver.cfg` and `bin/xymond`, or a standalone client's, marked
+  by `etc/xymonclient.cfg` and `bin/xymonclient.sh`. A server's own client
+  tree, the `XYMONCLIENTHOME` its `xymonserver.cfg` names, belongs to that
+  server. A machine may hold several installations, and a run acts on one.
+  `XYMONHOME` is the only thing that chooses it -- running under `xymoncmd`,
+  which sets it, counts as naming it -- and it is checked against its marks:
+  both of a server's pair are needed, a whole pair counting before any
+  single mark, so that a client's tree is never taken for a server's; a
+  client's tree, a tree with one mark of a pair, and a tree with none are
+  refused, naming what was found. Under `DESTDIR`, a staging target, the
+  marks are not read. Detection -- the tree holding the current directory,
+  `ext/` included, the trees of a running `xymonlaunch`, the packages' usual
+  paths, the `xymon` user's home -- only proposes: it gives the dialogue its
+  default, the tree holding the current directory first, else the only
+  installation found, else none, and the person confirms. Off a terminal,
+  without `XYMONHOME`, a server or client profile is refused, listing the
+  trees found: a script's target depends neither on its current directory
+  nor on what runs at that moment. Your own commands under `PREFIX` are a
+  question of their own, never a fallback for a missing tree. Every run says
+  on its first line the target and what chose it. Discussed in #39, where
+  what an install records of its target is still open.
 - **With no verb on a terminal, the command asks, then runs what it says.**
   Run with no verb, its input and its output on a terminal, it asks for a
-  verb, then for the plugins. The instance is the one targeted, by the rule
-  above; the dialogue does not ask for a side. For an install, Enter takes
-  every plugin of it, and the plugins a chosen one needs are added, each
-  named (S3). A removal has no default, and a plugin another installed one
-  needs is refused, naming it (S8), not removed with it. The dialogue then
-  prints the command its answers spell, asks `Proceed? [Y/n]`, and on yes
-  runs exactly that command and nothing else: it adds no behaviour of its
-  own, and an install it runs enables nothing (S5). Off a terminal, S17.
+  verb, then for the installation, by the rule above, then for the plugins.
+  For an install, Enter takes every plugin of it, and the plugins a chosen
+  one needs are added, each named (S3). A removal has no default, and a
+  plugin another installed one needs is refused, naming it (S8), not
+  removed with it. The dialogue then prints the command its answers spell,
+  asks `Proceed? [Y/n]`, and on yes runs exactly that command and nothing
+  else: it adds no behaviour of its own, and an install it runs enables
+  nothing (S5). Off a terminal, S17.
 - **A monitored host is a side.** `client-*` lines: a task the Xymon client
   starts from `clientlaunch.d`, linked as on the server. The checks under
   `checks/`, copied into place by hand today, each move under `plugins/`
@@ -273,3 +277,7 @@ Directions the rules leave room for, not yet decided:
   attestation, and so that monitored hosts get their plugins from the
   server. `xymon-plugin` stays the command that installs the first plugin.
   Discussed in #29.
+- **Working across installations.** A `status` of every installation on the
+  machine together, comparing their versions, installing into several in
+  one run. Nothing acts on two installations at once until then. Discussed
+  in #39.
