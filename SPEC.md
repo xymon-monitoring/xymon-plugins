@@ -156,6 +156,19 @@ so when there is nothing to do. The task file carries no `DISABLED`: one an
 older install wrote with that line is off, and the line is taken out, and
 the install says how to turn it on.
 
+**S19. `/plugins` serves only what a plugin declares.**
+What a server stages for `/plugins`, in `ext/xymon-plugins-dist`, is for
+each plugin its `PLUGIN` file, its `README.md`, and the files, manual
+pages, task and web server snippets its `PLUGIN` file names, with
+`install.sh` and `LICENSE`: a file left beside them in the checkout is not
+served. Each install prunes what is staged to the same, and to the
+plugins installed on the server, before staging, so that what an older
+install staged, or a plugin since renamed or removed left, is not served
+either; a link in the stage is removed, never written through, and a
+removal that fails stops the install. A name with a `/`, `.` or `..`, in
+a plugin's files or in `needs:`, or a plugin file that is a link, stops
+the install before anything is copied.
+
 ### Knowing what is installed
 
 **S15. `status` says what is installed.**
