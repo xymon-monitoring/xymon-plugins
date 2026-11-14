@@ -28,7 +28,7 @@ server_tree "$work/inst"
 register_cleanup 'stop_process "$API_PID"'
 
 # Every server-side plugin, as an admin installs them.
-"$ROOT/install.sh" install XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/install.log" 2>&1 \
+"$ROOT/install.sh" install-server XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/install.log" 2>&1 \
 	|| fail "install.sh install-server failed: $(tail -n 5 "$work/install.log")"
 # The MCP server and the agent are beside the API too, for its /ask.
 for p in xymonapi-mcp xymonapi-agent; do
@@ -72,13 +72,13 @@ assert_equal "$(sed -n 's/^version: *//p' "$ROOT/plugins/xymonapi-mcp/PLUGIN")" 
 
 # Uninstalled from the server, a plugin leaves the archive; xymonapi stays
 # while one staged needs it.
-"$ROOT/install.sh" uninstall xymonapi-rag XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/un.log" 2>&1 \
+"$ROOT/install.sh" uninstall-server xymonapi-rag XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/un.log" 2>&1 \
 	|| fail "install.sh uninstall-server of xymonapi-rag failed: $(tail -n 5 "$work/un.log")"
 tar -tzf <(curl -s "$plugins") > "$work/list2"
 grep -q '^xymon-plugins/plugins/xymonapi-rag/' "$work/list2" && fail "an uninstalled plugin stayed in the archive"
 grep -q '^xymon-plugins/plugins/xymonapi-mcp/PLUGIN$' "$work/list2" || fail "and took the others with it"
 rc=0
-"$ROOT/install.sh" uninstall xymonapi XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/un2.log" 2>&1 || rc=$?
+"$ROOT/install.sh" uninstall-server xymonapi XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/un2.log" 2>&1 || rc=$?
 [ "$rc" -ne 0 ] || fail "xymonapi was uninstalled while the staged MCP server needs it"
 assert_contains "needed by xymonapi-mcp" "$(cat "$work/un2.log")" "and the refusal names it"
 

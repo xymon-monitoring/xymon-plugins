@@ -34,7 +34,7 @@ register_cleanup 'stop_process "$API_PID"'
 
 # The API as ./install.sh install-server lays it out, its VERSION the client's, and the
 # client as ./install.sh install-tools does.
-"$ROOT/install.sh" install xymonapi XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/install.log" 2>&1 \
+"$ROOT/install.sh" install-server xymonapi XYMONHOME="$work/inst" MANDIR="$work/man" >"$work/install.log" 2>&1 \
 	|| fail "install.sh install-server failed: $(tail -n 5 "$work/install.log")"
 "$ROOT/install.sh" install-tools xymonapi PREFIX="$work/client" >"$work/client.log" 2>&1 \
 	|| fail "install.sh install-tools failed: $(tail -n 5 "$work/client.log")"

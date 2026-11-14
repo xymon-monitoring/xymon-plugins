@@ -11,10 +11,12 @@
 #   ./install.sh status-server|status-tools [PLUGIN...]  what is installed, and on
 #   ./install.sh venv-server|venv-tools          the virtualenv beside the plugins
 #
-# The server actions are also spelt without -server, their names before the
-# tools had one. install-client and its kin are refused, naming the tools
-# action: "client" is Xymon's, the monitored host, and the action of that
-# name will install a client extension there once one is here.
+# Every action names its side. Without one -- install, uninstall, venv,
+# enable, disable, status -- it is refused, naming the -server action and,
+# where there is one, the -tools; install-client and its kin are refused,
+# naming the tools action: "client" is Xymon's, the monitored host, and the
+# action of that name will install a client extension there once one is
+# here.
 #
 # With no PLUGIN, every plugin of that side. A server plugin whose xymon:
 # line names a newer Xymon than $XYMONHOME/bin/xymon --version gives is
@@ -574,6 +576,10 @@ uninstall_tools() {
 case $ACTION in
 	install-client|uninstall-client|venv-client)
 		die "$ACTION is now ${ACTION%-client}-tools: the plugins' commands, on your own machine. A client, here, is Xymon's, on a monitored host, and nothing installs one yet." ;;
+	install|uninstall|venv|status)
+		die "$ACTION names no side: $ACTION-server on the Xymon server, $ACTION-tools on your own machine" ;;
+	enable|disable)
+		die "$ACTION names no side: $ACTION-server, on the Xymon server" ;;
 esac
 
 # The plugins named, each checked, or every plugin; for an uninstall, the
@@ -585,25 +591,25 @@ deepest_first() {
 }
 
 case $ACTION in
-	install|install-server)
+	install-server)
 		need_home
 		for n in $LIST; do xymon_ok "$n"; done
 		reads_d
 		for n in $LIST; do install_server "$n"; done ;;
 	install-tools)
 		for n in $LIST; do install_tools "$n"; done ;;
-	enable|enable-server)
+	enable-server)
 		need_home
 		for n in $(installed_tasks); do enable "$n"; done ;;
-	disable|disable-server)
+	disable-server)
 		need_home
 		for n in $(installed_tasks); do disable "$n"; done ;;
-	status|status-server)
+	status-server)
 		need_home
 		for n in $LIST; do status server "$EXTROOT" "$n"; done ;;
 	status-tools)
 		for n in $LIST; do status tools "$TOOLSROOT" "$n"; done ;;
-	uninstall|uninstall-server)
+	uninstall-server)
 		need_home
 		for n in $(deepest_first); do uninstall_server "$n"; done
 		[ -n "$NAMES" ] || rm -rf "$EXTROOT/venv" ;;
@@ -613,7 +619,7 @@ case $ACTION in
 			rm -rf "$TOOLSROOT/venv"
 			rmdir "$TOOLSROOT" 2>/dev/null || true
 		fi ;;
-	venv|venv-server)
+	venv-server)
 		need_home
 		venv "$EXTROOT" ;;
 	venv-tools)

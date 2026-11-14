@@ -57,10 +57,9 @@ refused "half a server's pair" "$work/half" "it has etc/xymonserver.cfg, and a s
 tree "$work/bare"
 refused "a tree with no marks" "$work/bare" "none of etc/xymonserver.cfg bin/xymond is there"
 [ -e "$man" ] && fail "[S18] a tree with no marks: a manual page was installed"
-# Every server action, each spelling, named or not, is refused the same.
+# Every server action, named or not, is refused the same.
 find "$work/bare" | sort > "$work/before"
-for a in install-server enable-server disable-server status-server uninstall-server venv-server \
-	install enable disable status uninstall venv; do
+for a in install-server enable-server disable-server status-server uninstall-server venv-server; do
 	for p in xymonapi ""; do
 		rc=0
 		"$ROOT/install.sh" "$a" $p XYMONHOME="$work/bare" MANDIR="$man" </dev/null >"$work/a.log" 2>&1 || rc=$?

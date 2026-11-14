@@ -5,6 +5,16 @@ its version, what breaks, and what to do. Every other change needs nothing
 but installing the new code (see each plugin's README). CI refuses a change
 that breaks the API's contract without a line here.
 
+## Every install action names its side, install.sh from November 2026
+
+`./install.sh install`, `uninstall`, `venv`, `enable`, `disable` and
+`status`, the server actions without `-server`, are refused, naming the
+action with a side: `install-server`, `uninstall-server`, `venv-server`,
+`enable-server`, `disable-server`, `status-server`, and for the first
+three and `status` the `-tools` ones too. A script that used a short
+spelling adds `-server`. Nothing installed changes. The plain verbs are
+`xymon-plugin`'s, the command SPEC.md plans to replace `install.sh`.
+
 ## The server actions need a Xymon server's tree, install.sh from November 2026
 
 Every server action -- `install-server`, `enable-server`,
