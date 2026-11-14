@@ -29,6 +29,7 @@ command -v htpasswd >/dev/null 2>&1 || skip "Apache's htpasswd is not installed"
 command -v openssl >/dev/null 2>&1 || skip "openssl is not installed"
 
 work=$(mktempdir)
+server_tree "$work/inst"
 register_cleanup 'stop_process "$API_PID"'
 
 # The API as ./install.sh install-server lays it out, its VERSION the client's, and the

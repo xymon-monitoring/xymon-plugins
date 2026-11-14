@@ -34,7 +34,7 @@ done
 n=0
 server() {
 	n=$((n + 1)); h=$work/s$n
-	mkdir -p "$h/bin"
+	server_tree "$h"
 	[ -z "$1" ] || printf '#!/bin/sh\necho "Xymon version %s"\n' "$1" > "$h/bin/xymon"
 	[ -z "$1" ] || chmod 755 "$h/bin/xymon"
 }

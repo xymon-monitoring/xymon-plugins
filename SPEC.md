@@ -96,6 +96,16 @@ lines: files under `$PREFIX/libexec/xymon-plugins/NAME/`, commands in
 `$PREFIX/bin`, a section 1 manual page). A plugin has one side or both. The
 server side needs `XYMONHOME`, and without it installs nothing and says so.
 
+**S18. A server action acts only on a server's tree.**
+The tree `XYMONHOME` names is read for Xymon's marks, a whole pair counting
+before any single mark: a server's, `etc/xymonserver.cfg` and `bin/xymond`,
+which wins when a client's files are there too; else a client's,
+`etc/xymonclient.cfg` and `bin/xymonclient.sh`. A client's tree, a tree with
+one mark of a pair, and a tree with no marks are refused before anything
+changes, naming the marks found or missing. Under `DESTDIR`, a staging
+target, the marks are not read. Without `XYMONHOME`, the Xymon trees found
+on the machine are named, and none is chosen.
+
 ### Installing, updating, removing
 
 **S5. Installing enables nothing.**
@@ -201,14 +211,10 @@ brings its test.
   tree, the `XYMONCLIENTHOME` its `xymonserver.cfg` names, belongs to that
   server. A machine may hold several installations, and a run acts on one.
   `XYMONHOME` is the only thing that chooses it -- running under `xymoncmd`,
-  which sets it, counts as naming it -- and it is checked against its marks:
-  both of a server's pair are needed, a whole pair counting before any
-  single mark, so that a client's tree is never taken for a server's; a
-  client's tree, a tree with one mark of a pair, and a tree with none are
-  refused, naming what was found. Under `DESTDIR`, a staging target, the
-  marks are not read. Detection -- the tree holding the current directory,
-  `ext/` included, the trees of a running `xymonlaunch`, the packages' usual
-  paths, the `xymon` user's home -- only proposes: it gives the dialogue its
+  which sets it, counts as naming it -- and it is checked against its marks
+  (S18). Detection -- the tree holding the current directory, `ext/`
+  included, the trees of a running `xymonlaunch`, the packages' usual paths,
+  the `xymon` user's home -- only proposes: it gives the dialogue its
   default, the tree holding the current directory first, else the only
   installation found, else none, and the person confirms. Off a terminal,
   without `XYMONHOME`, a server or client profile is refused, listing the

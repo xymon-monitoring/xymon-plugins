@@ -30,6 +30,7 @@ command -v curl >/dev/null 2>&1 || skip "curl is not installed"
 command -v htpasswd >/dev/null 2>&1 || skip "Apache's htpasswd is not installed"
 
 work=$(mktempdir)
+server_tree "$work/inst"
 register_cleanup 'stop_process "$API_PID"'
 
 htpasswd -cb "$work/htpasswd" alice secret 2>/dev/null

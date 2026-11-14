@@ -20,12 +20,15 @@ set -euo pipefail
 ROOT=$(find_root)
 work=$(mktempdir)
 home=$work/server
+server_tree "$home"
 here=$(sed -n 's/^version: *//p' "$ROOT/plugins/xymonapi/PLUGIN")
 
 st() { "$ROOT/install.sh" status-server "$@" XYMONHOME="$home" 2>&1; }
 
+ls -laR "$home" > "$work/before"
 assert_contains "xymonapi: not installed; this checkout has $here" "$(st)" "[S15] a plugin not installed is said to be"
-[ -e "$home" ] && fail "[S15] status created $home"
+ls -laR "$home" > "$work/after"
+cmp -s "$work/before" "$work/after" || fail "[S15] status changed the tree: $(diff "$work/before" "$work/after")"
 
 "$ROOT/install.sh" install-server xymonapi XYMONHOME="$home" MANDIR="$work/man" >"$work/install.log" 2>&1 \
 	|| fail "install-server failed: $(tail -n 5 "$work/install.log")"

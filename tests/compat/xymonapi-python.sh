@@ -29,6 +29,7 @@ set -euo pipefail
 
 ROOT=$(find_root)
 work=$(mktempdir)
+server_tree "$work/server"
 real=${XYMONAPI_PYTHON:-python3}
 command -v "$real" >/dev/null 2>&1 || skip "$real is not installed"
 

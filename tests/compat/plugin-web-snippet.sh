@@ -22,6 +22,7 @@ set -euo pipefail
 ROOT=$(find_root)
 work=$(mktempdir)
 home=$work/server
+server_tree "$home"
 snippets=$(sed -n 's/^conf: *//p' "$ROOT/plugins/xymonapi/PLUGIN")
 [ -n "$snippets" ] || fail "plugins/xymonapi/PLUGIN names no snippet"
 

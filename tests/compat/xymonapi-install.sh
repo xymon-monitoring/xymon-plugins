@@ -34,6 +34,7 @@ set -euo pipefail
 ROOT=$(find_root)
 work=$(mktempdir)
 home=$work/server
+server_tree "$home"
 
 rc=0
 "$ROOT/install.sh" install MANDIR="$work/man" >"$work/nohome.log" 2>&1 || rc=$?
@@ -104,6 +105,7 @@ cmp -s "$work/enabled" "$task" \
 # A server directory with a space, an & and a | in its name: the paths are
 # quoted, and the replacement sed makes in the task files is escaped.
 odd="$work/x y&z|w"
+server_tree "$odd"
 "$ROOT/install.sh" install XYMONHOME="$odd" MANDIR="$work/man 2" >"$work/odd.log" 2>&1 \
 	|| fail "install.sh install-server into a directory with a space, & and | failed: $(tail -n 5 "$work/odd.log")"
 assert_file_exists "$odd/ext/xymonapi/xymonapi.sh"
@@ -127,6 +129,7 @@ assert_equal "# mine" "$(cat "$home/ext/xymonapi/xymonapi-apache.conf")" "[S7] a
 # xymonapi-rag needs the API that serves its index, and its client it reads
 # the API with.
 alone=$work/alone
+server_tree "$alone"
 "$ROOT/install.sh" install xymonapi-rag XYMONHOME="$alone" MANDIR="$work/man-alone" >"$work/alone.log" 2>&1 \
 	|| fail "install.sh install-server of xymonapi-rag alone failed: $(tail -n 5 "$work/alone.log")"
 for p in xymonapi xymonapi-rag; do
