@@ -3,15 +3,19 @@
 #
 # plugins/xymonapi/tests/xymonapi-graphs.sh
 #
-# /graphs fetches the PNG showgraph.cgi draws, through its wrapper
-# showgraph.sh at XYMONSERVERCGIURL. xymonserver.cfg ships that as a path,
+# /graphs gives the PNG showgraph.cgi draws. On the Xymon server it runs
+# that program itself, $XYMONHOME/bin/showgraph.cgi or the one
+# XYMONAPI_SHOWGRAPH names, as a CGI, and needs no web server. Where the
+# program is not there, or the setting is empty, it fetches the graph
+# through the wrapper showgraph.sh at XYMONSERVERCGIURL. xymonserver.cfg ships that as a path,
 # /xymon-cgi, which the web pages use relative to themselves; the API then
 # needs XYMONWEBHOST for the host, as Xymon's own pages do. An absolute
 # XYMONSERVERCGIURL needs no XYMONWEBHOST; a path without one is a 502 that
 # names the missing setting, not a stack trace.
 #
 # What comes back must be a PNG: showgraph.cgi answers an error as HTML with
-# status 200, and that is a 502, not an image. And a graph that takes long
+# status 200, and that is a 502, not an image. For a test without RRD data
+# it draws a PNG of one pixel, and that is a 404: no graph. And a graph that takes long
 # holds up its own request alone: /health answers meanwhile.
 #
 # The web server is tests/lib/fake-showgraph.py, which records the request
@@ -67,6 +71,9 @@ assert_contains 'service=tcp.http.web.example.com%3A8080%2C' "$(cat "$work/web.r
 assert_equal "502" "$(graph 'entity=html.example.com&test=conn')" "an HTML page from showgraph"
 assert_contains 'did not answer with a PNG' "$(cat "$work/graph")" "is refused, and the answer says why"
 
+assert_equal "404" "$(graph 'entity=empty.example.com&test=procs')" "a PNG of one pixel from showgraph"
+assert_contains '"not_found"' "$(cat "$work/graph")" "is no graph"
+
 # A graph that takes five seconds, and /health asked one second into it.
 graph 'entity=slow.example.com&test=conn' > "$work/slow.code" &
 SLOW_PID=$!
@@ -93,4 +100,52 @@ start_api
 assert_equal "502" "$(graph 'entity=web.example.com&test=conn')" "/graphs with a path and no XYMONWEBHOST"
 assert_contains 'XYMONWEBHOST' "$(cat "$work/graph")" "and the answer names the missing setting"
 
-pass "/graphs reaches showgraph.sh through XYMONWEBHOST, serves only a PNG, and a slow graph does not hold up /health"
+stop_process "$API_PID"; API_PID=""
+
+# 4. On the Xymon server the API runs showgraph.cgi itself, as the web
+# server would, and asks no web server: $XYMONHOME/bin/showgraph.cgi when it
+# is there. The stand-in records the request it was given as a CGI and
+# answers the PNG signature after its headers; for host=html.* an error
+# page, as showgraph does.
+mkdir -p "$work/home/bin"
+cat > "$work/home/bin/showgraph.cgi" <<CGI
+#!/bin/sh
+printf '%s %s %s\\n' "\$REQUEST_METHOD" "\$SCRIPT_NAME" "\$QUERY_STRING" > "$work/cgi.req"
+case "\$QUERY_STRING" in
+*host=html.*) printf 'Content-type: text/html\\n\\n<html>no such graph</html>\\n' ;;
+*) printf 'Content-type: image/png\\nExpires: 0\\n\\n\\211PNG\\r\\n\\032\\n' ;;
+esac
+CGI
+chmod 755 "$work/home/bin/showgraph.cgi"
+export XYMONHOME="$work/home" XYMONWEBHOST="$WEB"
+: > "$work/web.req"
+start_api
+assert_equal "200" "$(graph 'entity=web.example.com&test=conn&from=1699999800&to=1700000700')" "/graphs with a showgraph.cgi in XYMONHOME/bin"
+assert_equal "89504e470d0a1a0a" "$(od -An -tx1 -N8 "$work/graph" | tr -d ' \n')" "and the answer is the PNG it wrote, without its CGI headers"
+req=$(cat "$work/cgi.req")
+assert_match '^GET /xymon-cgi/showgraph\.sh ' "$req" "it is run as a GET of showgraph.sh under XYMONSERVERCGIURL"
+assert_contains 'host=web.example.com' "$req" "for the host"
+assert_contains 'service=conn' "$req" "and the test"
+assert_contains 'graph_start=1699999800' "$req" "from the time asked"
+assert_contains 'graph_end=1700000700' "$req" "to the time asked"
+assert_equal "" "$(cat "$work/web.req")" "and the web server is not asked"
+assert_equal "502" "$(graph 'entity=html.example.com&test=conn')" "an HTML page from showgraph.cgi"
+assert_contains 'showgraph.cgi did not answer with a PNG' "$(cat "$work/graph")" "is refused, and the answer says why"
+stop_process "$API_PID"; API_PID=""
+
+# 5. XYMONAPI_SHOWGRAPH names another program; set empty, the graph is
+# fetched from the web server as before, with the program still there.
+mv "$work/home/bin/showgraph.cgi" "$work/other.cgi"
+rm -f "$work/cgi.req"
+XYMONAPI_SHOWGRAPH="$work/other.cgi" start_api
+assert_equal "200" "$(graph 'entity=web.example.com&test=conn')" "/graphs with the program XYMONAPI_SHOWGRAPH names"
+assert_contains 'host=web.example.com' "$(cat "$work/cgi.req")" "which is the one that was run"
+stop_process "$API_PID"; API_PID=""
+mv "$work/other.cgi" "$work/home/bin/showgraph.cgi"
+rm -f "$work/cgi.req"
+XYMONAPI_SHOWGRAPH="" start_api
+assert_equal "200" "$(graph 'entity=web.example.com&test=conn')" "/graphs with XYMONAPI_SHOWGRAPH set empty"
+assert_match '^/xymon-cgi/showgraph\.sh\?' "$(cat "$work/web.req")" "asks the web server"
+[ -e "$work/cgi.req" ] && fail "XYMONAPI_SHOWGRAPH set empty, and showgraph.cgi was run"
+
+pass "/graphs runs showgraph.cgi where it is, else reaches showgraph.sh through XYMONWEBHOST; it serves only a PNG, one pixel of it is no graph, and a slow graph does not hold up /health"

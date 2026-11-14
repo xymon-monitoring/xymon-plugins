@@ -179,6 +179,9 @@ paths:
           content:
             image/png: { schema: { type: string, format: binary } }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "404":
+          description: showgraph drew no graph, only an image of one pixel, as it does for a test it has no RRD data for.
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
         "502": { $ref: "#/components/responses/Upstream" }
 
   /events:

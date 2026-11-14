@@ -7,16 +7,28 @@ Listens on a free port on 127.0.0.1 and writes it to PORTFILE. Every GET is
 written to RECORD -- its path with the query string -- and one whose path
 ends in /showgraph.sh is answered with a small PNG, as showgraph.cgi would
 draw one; any other path is a 404. Two hosts behave otherwise, as a real
-showgraph can: host=slow.* is answered after five seconds, and host=html.*
-with an HTML error page and status 200.
+showgraph can: host=slow.* is answered after five seconds, host=html.*
+with an HTML error page and status 200, and host=empty.* with a PNG of one
+pixel, as showgraph draws for a test without RRD data.
 """
 import http.server
+import struct
 import sys
 import time
+import zlib
 
 portfile, record = sys.argv[1], sys.argv[2]
 # The eight-byte PNG signature and nothing more: enough to be told from JSON.
 PNG = b"\x89PNG\r\n\x1a\n"
+
+
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+
+# A whole PNG of one pixel by one, as showgraph draws when it has no data.
+EMPTY = PNG + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 0, 0, 0, 0)) \
+    + chunk(b"IDAT", zlib.compress(b"\x00\x00")) + chunk(b"IEND", b"")
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -36,11 +48,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(page)
             return
+        body = EMPTY if "host=empty." in self.path else PNG
         self.send_response(200)
         self.send_header("Content-Type", "image/png")
-        self.send_header("Content-Length", str(len(PNG)))
+        self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(PNG)
+        self.wfile.write(body)
 
     def log_message(self, *args):
         pass
