@@ -14,7 +14,7 @@ Provided on a best-effort basis. Tested on RHEL/CentOS/AlmaLinux 9.
 | [`ciscoasa/`](ciscoasa/) | Python 3 | `cpu` `memory` `conn` `hardware` `net` `vpn` | Cisco ASA firewall health — server-side SSH poller |
 | [`dumpcheck/`](dumpcheck/) | Perl | `dumpcheck` | Backup file age and size regression |
 | [`freshfiles/`](freshfiles/) | Perl | `freshbackups` | File freshness — all files in a glob updated within time window |
-| [`interface/`](interface/) | Python 2 | `interface` | Network interface speed, duplex, and link state via `ethtool` |
+| [`interface/`](interface/) | Python 3 | `interface` | Network interface speed, duplex, and link state via `ethtool` |
 | [`logfetchupdate/`](logfetchupdate/) | sh | — | Downloads updated `logfetch` config from server (Terabithia) |
 | [`omsa-raid/`](omsa-raid/) | sh | `hardware` | Dell PERC RAID via OpenManage `omreport` (OMSA) |
 | [`openmanage/`](openmanage/) | bash | `hardware` | Dell chassis health (fans, temps, PSUs, memory) via `omreport chassis` |
@@ -73,7 +73,7 @@ third-party code the original license still governs redistribution.
 | [`ciscoasa/`](ciscoasa/) | server | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`dumpcheck/`](dumpcheck/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext), [`xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
 | [`freshfiles/`](freshfiles/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks) | spiderr (2026) | GPL-2+ | ✅ |
-| [`interface/`](interface/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks); orig. blog [archived 2018](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) (live site **down**) | netdar (2013) | ❌ none | ⚠️ see note below |
+| [`interface/`](interface/) | client | **this repo** | [`spiderr/xymon-checks`](https://github.com/spiderr/xymon-checks); orig. blog [archived 2018](http://web.archive.org/web/20180328134523/http://blog.dafert.org/xymon-bigbrother-script-to-monitor-network-interfaces-duplex-settings-and-bonding/) (live site **down**) | rewrite (2026), after netdar (2013) | GPL-2+ | ✅ rewritten, see note below |
 | [`logfetchupdate/`](logfetchupdate/) | client | **this repo** | Original work | spiderr (2026) | GPL-2+ | ⚠️ empty `## Origin` |
 | [`omsa-raid/`](omsa-raid/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); Xymon list [2009](https://lists.xymon.com/xymon/2009-March/023783.html), [2011](https://lists.xymon.com/xymon/2011-September/032429.html) | Ben Argyle, U. Cambridge | Public domain | ✅ |
 | [`openmanage/`](openmanage/) | client | **this repo** | [`spiderr/xymon-ext`](https://github.com/spiderr/xymon-ext); [hobbit list (2008)](https://lists.xymon.com/archive/2008-November/022358.html) | Brian Smith-Sweeney, UC (2002) | UC license (non-commercial) | ✅ |
@@ -92,7 +92,7 @@ third-party code the original license still governs redistribution.
    (this repo)" + GPL-2+. Add both `## Origin` and `## License` to its README.
 2. **`ciscoasa` / `logfetchupdate` / `postfixq`** *(⚠️ cosmetic)* — the `## Origin`
    section is empty; fill it with "Original work — this repository".
-3. **`interface` — unlicensed third-party code** *(⚠️ decision required)*
+3. **`interface` — unlicensed third-party code** *(✅ resolved by option (a): rewritten in Python 3 under GPL-2+, sharing no code with netdar's)*
 
    Findings (verified 2026-07):
    - **Author:** netdar — from the script header (`Created on Aug 9, 2013` /
