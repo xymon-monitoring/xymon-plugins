@@ -5,6 +5,19 @@ its version, what breaks, and what to do. Every other change needs nothing
 but installing the new code (see each plugin's README). CI refuses a change
 that breaks the API's contract without a line here.
 
+## The server actions need a Xymon server's tree, install.sh from November 2026
+
+Every server action -- `install-server`, `enable-server`,
+`disable-server`, `status-server`, `uninstall-server`, `venv-server` --
+now reads the tree `XYMONHOME` names for a server's two marks,
+`etc/xymonserver.cfg` and `bin/xymond`, and refuses it before changing
+anything when they are not both there: a client's tree, part of a pair, or
+a directory that is no Xymon tree at all. An install into an empty
+directory, which used to make one, is refused; to stage the plugins for a
+package, set `DESTDIR`, under which no marks are read. A plugin left in a
+tree whose Xymon is already gone is removed by deleting `ext/NAME`. A real
+server, packaged or built from source, needs nothing.
+
 ## A password file is needed, from xymonapi 3.0.0
 
 With `XYMONAPI_PASSWD` not set and no `$XYMONHOME/etc/xymonpasswd`, the API

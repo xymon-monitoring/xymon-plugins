@@ -41,6 +41,14 @@ find_root() {
 	cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
 }
 
+# server_tree DIR -- DIR, made a Xymon server's tree by its two marks (S18):
+# bin/xymond, and an etc/xymonserver.cfg that reads xymonserver.d/.
+server_tree() {
+	mkdir -p "$1/bin" "$1/etc"
+	: > "$1/bin/xymond"
+	echo "optional directory $1/etc/xymonserver.d" > "$1/etc/xymonserver.cfg"
+}
+
 API_PORT=""
 API_PID=""
 # With XYMONAPI_TLS_CERT in the environment the API speaks HTTPS, and curl

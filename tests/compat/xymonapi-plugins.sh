@@ -24,6 +24,7 @@ require_bin XYMONCLIENT "$XYMON_SRC/common/xymon"
 command -v curl >/dev/null 2>&1 || skip "curl is not installed"
 
 work=$(mktempdir)
+server_tree "$work/inst"
 register_cleanup 'stop_process "$API_PID"'
 
 # Every server-side plugin, as an admin installs them.

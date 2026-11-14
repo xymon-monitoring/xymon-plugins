@@ -42,7 +42,7 @@
 
 ROOT=$(cd "$(dirname "$0")" && pwd)
 
-die() { echo "install.sh: $*" >&2; exit 1; }
+die() { printf 'install.sh: %s\n' "$*" >&2; exit 1; }
 usage() {
 	echo "usage: ./install.sh install-server|install-tools|enable-server|disable-server|status-server|status-tools|uninstall-server|uninstall-tools|venv-server|venv-tools [--force] [PLUGIN...] [NAME=value...]" >&2
 	exit 2
@@ -172,8 +172,64 @@ reads_d() {
 	echo "as Xymon's own xymonserver.cfg has it since 4.3.31" >&2
 }
 
+# marks TREE -- what TREE is by Xymon's marks, a whole pair counting before
+# any single mark: server, when both of a server's are there, a client's
+# files with them or not, as where server and client share /etc/xymon;
+# else client; else "some MARK..." naming the marks there; else none.
+SERVER_MARKS="etc/xymonserver.cfg bin/xymond"
+CLIENT_MARKS="etc/xymonclient.cfg bin/xymonclient.sh"
+marks() {
+	found=
+	for m in $SERVER_MARKS $CLIENT_MARKS; do
+		if [ -e "$1/$m" ]; then found="$found $m"; fi
+	done
+	case " $found " in
+		*" etc/xymonserver.cfg"*" bin/xymond "*) echo server ;;
+		*" etc/xymonclient.cfg"*" bin/xymonclient.sh "*) echo client ;;
+		"  ") echo none ;;
+		*) echo "some$found" ;;
+	esac
+}
+
+# xymon_trees -- the Xymon trees on this machine, "KIND DIR" each: those
+# XYMON_PLUGINS_TREES names, colon-separated, and the packages' usual paths.
+# It only tells what is here: nothing is chosen from it.
+# ponytail: fixed paths only; a running xymonlaunch's tree when a relocated
+# server needs finding, which ps cannot tell portably.
+xymon_trees() {
+	{
+		printf '%s\n' "${XYMON_PLUGINS_TREES:-}" | tr ':' '\n'
+		for t in /usr/lib/xymon/server /usr/lib/xymon/client /usr/local/xymon/server \
+			/usr/local/xymon/client /home/xymon/server /home/xymon/client; do
+			printf '%s\n' "$t"
+		done
+	} | sort -u | while IFS= read -r t; do
+		[ -n "$t" ] || continue
+		k=$(marks "$t")
+		case $k in server|client) printf '%s %s\n' "$k" "$t" ;; esac
+	done
+}
+
+# need_home -- the server's part goes in the tree XYMONHOME names, and only
+# in a server's: without XYMONHOME, the trees found are named, none chosen;
+# a client's tree, part of a pair and no marks at all are refused before
+# anything changes. Under DESTDIR, a staging target, no marks are read,
+# the host's included.
 need_home() {
-	[ -n "$XYMONHOME" ] || die "XYMONHOME is not set: XYMONHOME=<the Xymon server directory> ./install.sh $ACTION [PLUGIN...]"
+	if [ -z "$XYMONHOME" ]; then
+		found=
+		[ -n "$DESTDIR" ] || found=$(xymon_trees | sed 's/^\([a-z]*\) \(.*\)/  \2, a Xymon \1/')
+		die "XYMONHOME is not set: XYMONHOME=<the Xymon server directory> ./install.sh $ACTION [PLUGIN...]${found:+
+Xymon trees found here, none chosen:
+$found}"
+	fi
+	[ -z "$DESTDIR" ] || return 0
+	set -- $(marks "$XYMONHOME")
+	case $1 in
+		client) die "$XYMONHOME is a Xymon client's tree ($CLIENT_MARKS), not a server's: the server's part of a plugin goes in a server's tree" ;;
+		some) shift; die "$XYMONHOME is not a whole Xymon server's tree: it has $*, and a server's has $SERVER_MARKS" ;;
+		none) die "$XYMONHOME is no Xymon server's tree: none of $SERVER_MARKS is there; to stage one for a package, set DESTDIR" ;;
+	esac
 }
 
 # fresh DIR -- DIR, emptied: an install replaces a plugin's directory as a

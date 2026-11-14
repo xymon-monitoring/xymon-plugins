@@ -26,6 +26,7 @@ set -euo pipefail
 ROOT=$(find_root)
 work=$(mktempdir)
 home=$work/server
+server_tree "$home"
 launch=$XYMON_SRC/common/xymonlaunch
 [ -x "$launch" ] || skip "xymonlaunch is not built in $XYMON_SRC"
 
