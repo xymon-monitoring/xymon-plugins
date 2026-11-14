@@ -361,6 +361,9 @@ def graph(entity: str | None, test: str | None, frm: str, to: str) -> bytes:
     q = urlencode({"host": _name(entity, "entity"), "service": _name(test, "test"),
                    "graph_start": epoch(frm), "graph_end": epoch(to),
                    "action": "view"})
+    png = _showgraph(q)
+    if png is not None:
+        return _png(png, "showgraph.cgi")
     if not XYMONSERVERCGIURL:
         raise Upstream("XYMONSERVERCGIURL is not set")
     # xymonserver.cfg gives XYMONSERVERCGIURL as a path, "/xymon-cgi": the
@@ -373,13 +376,46 @@ def graph(entity: str | None, test: str | None, frm: str, to: str) -> bytes:
         url = XYMONWEBHOST.rstrip("/") + "/" + url.lstrip("/")
     with urllib.request.urlopen(f"{url}/showgraph.sh?{q}", timeout=30) as r:
         png = r.read(_GRAPH_MAX + 1)
+    return _png(png, f"showgraph.sh at {url}")
+
+
+def _png(png: bytes, source: str) -> bytes:
     # What came back is served as a PNG, so it must be one: showgraph.cgi
     # answers an error as HTML, with status 200.
     if not png.startswith(_PNG):
-        raise Upstream(f"showgraph.sh at {url} did not answer with a PNG")
+        raise Upstream(f"{source} did not answer with a PNG")
     if len(png) > _GRAPH_MAX:
-        raise Upstream(f"showgraph.sh at {url} answered more than {_GRAPH_MAX} bytes")
+        raise Upstream(f"{source} answered more than {_GRAPH_MAX} bytes")
     return png
+
+
+# The program that draws the graphs, run here as the web server would run
+# it: the API is on the Xymon server, as the Xymon user, with Xymon's own
+# settings, so the graph needs no web server -- nor its address, its
+# redirect to HTTPS or a certificate this machine trusts. XYMONAPI_SHOWGRAPH
+# names another program; set empty, the graph is fetched over HTTP from
+# XYMONSERVERCGIURL, as before.
+SHOWGRAPH = os.environ.get("XYMONAPI_SHOWGRAPH",
+                           os.path.join(os.environ.get("XYMONHOME", "/nonexistent"), "bin", "showgraph.cgi"))
+
+
+def _showgraph(q: str) -> bytes | None:
+    """The body showgraph.cgi writes for the query Q, or None when the
+    program is not here to run."""
+    if not SHOWGRAPH or not os.access(SHOWGRAPH, os.X_OK):
+        return None
+    script = (XYMONSERVERCGIURL or "/xymon-cgi") + "/showgraph.sh"
+    env = dict(os.environ, GATEWAY_INTERFACE="CGI/1.1", REQUEST_METHOD="GET", QUERY_STRING=q,
+               SCRIPT_NAME=script, REQUEST_URI=f"{script}?{q}")
+    out = subprocess.run([SHOWGRAPH], env=env, capture_output=True, timeout=30)
+    # A CGI answer: headers, an empty line, the body. The empty line that
+    # comes first ends the headers, whichever way its lines end.
+    crlf, lf = out.stdout.find(b"\r\n\r\n"), out.stdout.find(b"\n\n")
+    if crlf >= 0 and (lf < 0 or crlf < lf):
+        return out.stdout[crlf + 4:]
+    if lf >= 0:
+        return out.stdout[lf + 2:]
+    return out.stdout
 
 
 
