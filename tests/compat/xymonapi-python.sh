@@ -66,7 +66,7 @@ assert_contains "no Python with the modules this plugin needs (fastembed numpy):
 assert_not_contains "[y/N]" "$(cat "$work/install-xymonapi-rag.log")" "and, with no terminal, asks nothing"
 assert_not_contains "virtualenv" "$(cat "$work/install-xymonapi-mcp.log")" "a plugin that needs no modules says nothing of it"
 # On the server the hint names the server's command, not the client's.
-"$ROOT/install.sh" install xymonapi XYMONHOME="$work/server" MANDIR="$work/man" PYTHON="$work/lacks/python3" >"$work/install-server.log" 2>&1 \
+"$ROOT/install.sh" install-server xymonapi XYMONHOME="$work/server" MANDIR="$work/man" PYTHON="$work/lacks/python3" >"$work/install-server.log" 2>&1 \
 	|| fail "install.sh install-server of xymonapi failed: $(tail -n 5 "$work/install-server.log")"
 assert_contains "(fastapi uvicorn yaml): ./install.sh venv-server PYTHON=$work/lacks/python3" \
 	"$(cat "$work/install-server.log")" "installing on the server names ./install.sh venv-server"

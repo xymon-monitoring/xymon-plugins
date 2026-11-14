@@ -22,7 +22,8 @@
 # plugin's files, manual page, task and snippets, and keeps the data,
 # saying so; on a laptop it says what to undo by hand.
 # install-client, uninstall-client and venv-client are refused, naming the
-# tools action, and install nothing.
+# tools action, and so is an action that names no side, naming the -server
+# one; none installs anything.
 #
 # Installed into a scratch directory. No Python is needed: the API is copied,
 # not run. Uses the test helpers of the Xymon tree in XYMON_SRC.
@@ -37,7 +38,7 @@ home=$work/server
 server_tree "$home"
 
 rc=0
-"$ROOT/install.sh" install MANDIR="$work/man" >"$work/nohome.log" 2>&1 || rc=$?
+"$ROOT/install.sh" install-server MANDIR="$work/man" >"$work/nohome.log" 2>&1 || rc=$?
 [ "$rc" -ne 0 ] || fail "install.sh install-server without XYMONHOME succeeded"
 assert_contains "XYMONHOME" "$(cat "$work/nohome.log")" "[S4] and it says what is missing"
 [ -e "$work/man" ] && fail "[S4] install.sh install-server without XYMONHOME installed something"
@@ -82,7 +83,7 @@ assert_equal "-rw-r--r--" "$mode" "the task file's mode under umask 077"
 # longer ships does not stay behind, and the install says to restart the API.
 echo 'stale' > "$home/ext/xymonapi/gone.py"
 echo 'stale' > "$home/ext/xymonapi-rag/gone.py"
-"$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >"$work/update.log" 2>&1 \
+"$ROOT/install.sh" install-server XYMONHOME="$home" MANDIR="$work/man" >"$work/update.log" 2>&1 \
 	|| fail "installing over an install failed: $(tail -n 5 "$work/update.log")"
 [ -e "$home/ext/xymonapi/gone.py" ] && fail "[S7] a file no longer shipped stayed in ext/xymonapi after an update"
 [ -e "$home/ext/xymonapi-rag/gone.py" ] && fail "a file no longer shipped stayed in ext/xymonapi-rag after an update"
@@ -96,7 +97,7 @@ assert_not_contains "pkill" "$(cat "$work/update.log")" "and asks no pkill of th
 echo '# mine' >> "$task"
 cp "$task" "$work/enabled"
 "$ROOT/install.sh" enable-server xymonapi XYMONHOME="$home" >/dev/null 2>&1 || fail "enable-server xymonapi failed"
-"$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >"$work/reinstall.log" 2>&1 \
+"$ROOT/install.sh" install-server XYMONHOME="$home" MANDIR="$work/man" >"$work/reinstall.log" 2>&1 \
 	|| fail "installing a second time failed: $(tail -n 5 "$work/reinstall.log")"
 cmp -s "$work/enabled" "$task" \
 	|| fail "[S7] a second install changed the task file the admin had enabled: $(cat "$task")"
@@ -106,7 +107,7 @@ cmp -s "$work/enabled" "$task" \
 # quoted, and the replacement sed makes in the task files is escaped.
 odd="$work/x y&z|w"
 server_tree "$odd"
-"$ROOT/install.sh" install XYMONHOME="$odd" MANDIR="$work/man 2" >"$work/odd.log" 2>&1 \
+"$ROOT/install.sh" install-server XYMONHOME="$odd" MANDIR="$work/man 2" >"$work/odd.log" 2>&1 \
 	|| fail "install.sh install-server into a directory with a space, & and | failed: $(tail -n 5 "$work/odd.log")"
 assert_file_exists "$odd/ext/xymonapi/xymonapi.sh"
 assert_file_exists "$work/man 2/man8/xymonapi.8"
@@ -122,7 +123,7 @@ grep -q 'proxy.server' "$home/ext/xymonapi/xymonapi-lighttpd.conf" || fail "[S16
 [ -e "$home/etc/xymonapi-apache.conf" ] && fail "[S16] the install wrote a snippet in etc/"
 assert_contains "xymonapi's task is off: XYMONHOME=$home ./install.sh enable-server xymonapi turns it on" "$(cat "$work/install.log")" "[S5] the install says what to do next"
 echo "# mine" > "$home/ext/xymonapi/xymonapi-apache.conf"
-"$ROOT/install.sh" install XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || fail "a third install failed"
+"$ROOT/install.sh" install-server XYMONHOME="$home" MANDIR="$work/man" >/dev/null 2>&1 || fail "a third install failed"
 assert_equal "# mine" "$(cat "$home/ext/xymonapi/xymonapi-apache.conf")" "[S7] an edited Apache snippet is kept"
 
 # One plugin alone brings what it needs beside it: on the server,
@@ -130,7 +131,7 @@ assert_equal "# mine" "$(cat "$home/ext/xymonapi/xymonapi-apache.conf")" "[S7] a
 # the API with.
 alone=$work/alone
 server_tree "$alone"
-"$ROOT/install.sh" install xymonapi-rag XYMONHOME="$alone" MANDIR="$work/man-alone" >"$work/alone.log" 2>&1 \
+"$ROOT/install.sh" install-server xymonapi-rag XYMONHOME="$alone" MANDIR="$work/man-alone" >"$work/alone.log" 2>&1 \
 	|| fail "install.sh install-server of xymonapi-rag alone failed: $(tail -n 5 "$work/alone.log")"
 for p in xymonapi xymonapi-rag; do
 	[ -f "$alone/ext/$p/VERSION" ] || fail "[S3] installing xymonapi-rag alone did not install $p, which it needs"
@@ -146,6 +147,16 @@ for a in install-client uninstall-client venv-client; do
 	assert_contains "$a is now ${a%-client}-tools" "$(cat "$work/refused.log")" "and says the new name"
 done
 [ -e "$work/refused" ] && fail "a refused install-client installed something"
+
+# An action that names no side is refused by name, saying the -server one,
+# whatever XYMONHOME says.
+for a in install uninstall venv enable disable status; do
+	rc=0
+	"$ROOT/install.sh" $a xymonapi XYMONHOME="$home" PREFIX="$work/refused" MANDIR="$work/refused" >"$work/refused.log" 2>&1 || rc=$?
+	assert_equal "1" "$rc" "install.sh $a is refused"
+	assert_contains "$a names no side: $a-server" "$(cat "$work/refused.log")" "and says the action with a side"
+done
+[ -e "$work/refused" ] && fail "a refused action with no side installed something"
 
 # The tools side: no Xymon here, PREFIX with a space in its name.
 prefix="$work/client prefix"
@@ -186,13 +197,13 @@ fi
 # says what register did besides.
 for p in xymonapi; do
 	rc=0
-	"$ROOT/install.sh" uninstall "$p" XYMONHOME="$home" MANDIR="$work/man" >"$work/un-$p.log" 2>&1 || rc=$?
+	"$ROOT/install.sh" uninstall-server "$p" XYMONHOME="$home" MANDIR="$work/man" >"$work/un-$p.log" 2>&1 || rc=$?
 	[ "$rc" -ne 0 ] || fail "[S3] uninstalling $p while xymonapi-mcp and xymonapi-rag need it succeeded"
 	# Any of those installed that need it; the first, by name, is xymonapi-mcp.
 	assert_contains "$p is needed by xymonapi-mcp" "$(cat "$work/un-$p.log")" "[S3] and says which plugin needs $p"
 	assert_file_exists "$home/ext/$p/VERSION"
 done
-"$ROOT/install.sh" uninstall XYMONHOME="$home" MANDIR="$work/man" >"$work/uninstall.log" 2>&1 \
+"$ROOT/install.sh" uninstall-server XYMONHOME="$home" MANDIR="$work/man" >"$work/uninstall.log" 2>&1 \
 	|| fail "install.sh uninstall-server failed: $(tail -n 5 "$work/uninstall.log")"
 for f in ext/xymonapi ext/xymonapi-mcp ext/xymonapi-rag etc/tasks.d/xymonapi etc/tasks.d/xymonapi-rag; do
 	if [ -e "$home/$f" ] || [ -L "$home/$f" ]; then fail "[S8] install.sh uninstall-server left $f"; fi
