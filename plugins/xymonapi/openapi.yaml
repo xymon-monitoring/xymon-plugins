@@ -384,8 +384,8 @@ components:
 
     Severity:
       type: string
-      description: red is major, purple critical, yellow and anything else minor.
-      enum: [minor, major, critical]
+      description: "In ITU-T X.733's words: red is major, purple critical, yellow minor; clear, no data, and blue, a test disabled, are indeterminate, saying nothing of the state."
+      enum: [minor, major, critical, indeterminate]
 
     Labels:
       type: object
@@ -468,7 +468,7 @@ components:
         entity:   { type: string }
         test:     { type: string }
         severity: { $ref: "#/components/schemas/Severity" }
-        status:   { type: string, enum: [firing] }
+        status:   { type: string, enum: [firing, suppressed], description: "firing, or suppressed: the test is disabled (blue), listed all the same, as Alertmanager lists a silenced alert." }
         since:    { type: string, format: date-time }
 
     Entity:

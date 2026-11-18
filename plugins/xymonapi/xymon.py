@@ -69,7 +69,11 @@ class Upstream(RuntimeError):
 # A verdict, never a colour: the colour is how the web pages show it.
 COLOUR_STATUS = {"green": "ok", "yellow": "warning", "red": "critical",
                  "blue": "disabled", "clear": "nodata", "purple": "unknown"}
-COLOUR_SEVERITY = {"red": "major", "purple": "critical", "yellow": "minor"}
+# An alarm's severity, by ITU-T X.733's words: clear, no data, and blue, a
+# test disabled, say nothing of the state, which is indeterminate; a
+# disabled one is listed, suppressed, as Alertmanager has it.
+COLOUR_SEVERITY = {"red": "major", "purple": "critical", "yellow": "minor",
+                   "clear": "indeterminate", "blue": "indeterminate"}
 # xymond_history writes a colour to allevents as its first two letters:
 # "gr ye" is green after yellow. The full names are taken too.
 _SHORT = {c[:2]: c for c in COLOUR_STATUS}
@@ -141,7 +145,8 @@ def alarms() -> list[dict]:
             continue
         host, tst = d.get("hostname", "?"), d.get("testname", "?")
         a = {"id": f"{host}:{tst}", "entity": host, "test": tst,
-             "severity": COLOUR_SEVERITY.get(colour, "minor"), "status": "firing"}
+             "severity": COLOUR_SEVERITY.get(colour, "indeterminate"),
+             "status": "suppressed" if colour == "blue" else "firing"}
         t = _iso(d.get("lastchange", ""))
         if t:
             a["since"] = t

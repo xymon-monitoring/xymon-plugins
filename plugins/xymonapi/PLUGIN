@@ -2,7 +2,7 @@
 # it alone. One key per line, a key repeated for each line of a message;
 # ./xymon-plugin at the repository's top installs it from the lines below.
 name: xymonapi
-version: 7.0.1
+version: 8.0.0
 summary: a read-only HTTP and JSON interface to a Xymon server, as one of its xymonlaunch tasks, and its client
 server-short: the HTTP API, a xymonlaunch task
 tools-short: xymonapi-connect, to connect this machine to the API

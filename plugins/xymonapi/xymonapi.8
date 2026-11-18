@@ -1,4 +1,4 @@
-.TH XYMONAPI 8 "November 17, 2026" "xymon-plugins"
+.TH XYMONAPI 8 "November 18, 2026" "xymon-plugins"
 .SH NAME
 xymonapi \- read-only HTTP and JSON interface to the Xymon server
 .SH SYNOPSIS
@@ -70,7 +70,11 @@ verdict: green is ok, yellow warning, red critical, blue disabled, clear
 nodata and purple unknown. A state that is acknowledged carries
 \fBacknowledged\fR, as \fB/status\fR gives it: its words and until when.
 .IP "\fB/alarms\fR"
-Every state whose verdict is not ok.
+Every state whose verdict is not ok, with a severity in ITU-T X.733's
+words: red major, purple critical, yellow minor; clear, which has no data,
+and blue, a test disabled, indeterminate, as they say nothing of the state.
+Its status is firing, or suppressed for a test disabled, listed all the
+same, as Alertmanager lists a silenced alert.
 .IP "\fB/entities\fR"
 Each host on the board, once.
 .IP "\fB/status\fR \fBentity\fR=HOST \fBtest\fR=TEST"

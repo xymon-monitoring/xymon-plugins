@@ -16,6 +16,17 @@ that names `tasks.d/xymonapi`. Also: `enable` now refuses a server whose
 `tasks.cfg` has no `directory` line for `tasks.d/`, and says the line to
 add; `--force` makes the link where the server reads it another way.
 
+## /alarms says clear and blue as the standards do, from xymonapi 8.0.0
+
+`/alarms` gave a test with no data (clear) and one disabled (blue) the
+severity `minor`, as a warning, and the status `firing`. They now have
+the severity `indeterminate`, ITU-T X.733's word for a state that cannot
+be told, and a disabled one the status `suppressed`, as Alertmanager lists
+a silenced alert: both stay listed. `Severity` gains `indeterminate` and
+`Alarm.status` `suppressed`. What to do: a client that counts alarms by
+severity, or takes every one for firing, reads these values; one that
+wants what needs acting on passes over `indeterminate` and `suppressed`.
+
 ## /health says each version under what it is the version of, from xymonapi 7.0.0
 
 `/health` gave `version`, the API's, and `server_version`, xymond's answer

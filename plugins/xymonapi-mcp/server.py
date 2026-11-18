@@ -133,7 +133,9 @@ def states(entity: str | None = None, test: str | None = None,
 
 @tool
 def alarms() -> dict:
-    """Every state whose verdict is not ok, with its severity."""
+    """Every state whose verdict is not ok, with its severity: major (red),
+    critical (purple), minor (yellow), or indeterminate -- clear, no data,
+    and a test disabled, whose status is suppressed rather than firing."""
     return api("/alarms")
 
 
