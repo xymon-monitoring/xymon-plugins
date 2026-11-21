@@ -200,6 +200,9 @@ A plugin's task is on when `etc/tasks.d/NAME.cfg` links to its task file
 and the server's `tasks.cfg` reads `tasks.d/`, and off when the link is
 absent: xymonlaunch has the task exactly then. `enable` makes the link,
 `disable` removes it, and each says so when there is nothing to do.
+An install or update keeps the link and the file it names in place
+throughout -- the file replaced by a rename, never removed first -- so
+that xymonlaunch, reading `tasks.d/` meanwhile, never drops the task.
 Before it makes the link, `enable` looks for the line by which the
 server's `tasks.cfg` reads `tasks.d/`, a `directory` line naming it, as
 Xymon's own has it. Where there is none, it refuses, makes no link, and

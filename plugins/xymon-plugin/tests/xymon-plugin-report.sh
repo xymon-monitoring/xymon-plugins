@@ -153,4 +153,47 @@ RC=0; env -u XYMON PATH="$bin:$PATH" XYMSRV=0.0.0.0 XYMONHOME="$home" MACHINEDOT
 assert_equal 1 "$RC" "without XYMON: 1"
 assert_contains "XYMON is not set" "$(cat "$work/log")" "saying what is missing"
 
+# An update of a plugin whose task is on never leaves tasks.d/'s link
+# pointing nowhere: xymonlaunch, reading tasks.d/ then, would drop the task
+# and stop it, and not notice the file back. Every rm, mv, cp, ln, mkdir
+# the update runs checks the link before and after itself.
+watch=$work/watch; mkdir -p "$watch"
+for c in rm mv cp ln mkdir; do
+	cat > "$watch/$c" <<'SH'
+#!/bin/sh
+c=${0##*/}
+[ -e "$LINK" ] || printf 'before %s %s\n' "$c" "$*" >> "$WORK/dangling"
+"/bin/$c" "$@"; rc=$?
+[ -e "$LINK" ] || printf 'after %s %s\n' "$c" "$*" >> "$WORK/dangling"
+exit $rc
+SH
+	chmod 755 "$watch/$c"
+done
+rm -f "$work/dangling"
+link=$home/etc/tasks.d/xymon-plugin.cfg
+PATH="$watch:$PATH" LINK="$link" WORK="$work" "$ROOT/xymon-plugin" update --server xymon-plugin XYMONHOME="$home" MANDIR="$work/man" >"$work/update.log" 2>&1 \
+	|| fail "update --server xymon-plugin failed: $(tail -n 5 "$work/update.log")"
+[ -s "$work/dangling" ] && fail "[S13] during the update, tasks.d/'s link pointed nowhere: $(head -n 3 "$work/dangling")"
+[ "$(readlink "$link")" = "$home/ext/xymon-plugin/tasks.cfg" ] || fail "[S13] the update did not leave the task on"
+assert_contains "task is on, as it was" "$(cat "$work/update.log")" "[S13] and says so"
+# The same when this version's task file differs from the one installed,
+# unedited: it replaces it.
+for f in "$ext/tasks.cfg" "$ext/.shipped/tasks.cfg"; do printf '# an older version\n' >> "$f"; done
+rm -f "$work/dangling"
+PATH="$watch:$PATH" LINK="$link" WORK="$work" "$ROOT/xymon-plugin" update --server xymon-plugin XYMONHOME="$home" MANDIR="$work/man" >"$work/update.log" 2>&1 \
+	|| fail "update --server xymon-plugin failed: $(tail -n 5 "$work/update.log")"
+assert_contains "unedited, is replaced by this version's" "$(cat "$work/update.log")" "[S7] an unedited task file takes this version's"
+[ -s "$work/dangling" ] && fail "[S13] replacing the task file, tasks.d/'s link pointed nowhere: $(head -n 3 "$work/dangling")"
+[ "$(readlink "$link")" = "$home/ext/xymon-plugin/tasks.cfg" ] || fail "[S13] the update did not leave the task on"
+grep -q 'an older version' "$ext/tasks.cfg" && fail "[S7] the older task file stayed"
+# And where tasks.d/ holds a copy of the task file, not a link, as an older
+# install made, or an editor writing by renaming left: it becomes the link.
+rm -f "$link" && cp "$ext/tasks.cfg" "$link"
+rm -f "$work/dangling"
+PATH="$watch:$PATH" LINK="$link" WORK="$work" "$ROOT/xymon-plugin" update --server xymon-plugin XYMONHOME="$home" MANDIR="$work/man" >"$work/update.log" 2>&1 \
+	|| fail "update --server xymon-plugin failed: $(tail -n 5 "$work/update.log")"
+[ -s "$work/dangling" ] && fail "[S13] making a copy in tasks.d/ the link, it was absent: $(head -n 3 "$work/dangling")"
+[ "$(readlink "$link")" = "$home/ext/xymon-plugin/tasks.cfg" ] || fail "[S13] the copy in tasks.d/ did not become the link"
+for f in "$home/etc/tasks.d"/.*.tmp; do [ -e "$f" ] || [ -L "$f" ] && fail "a temporary name stayed in tasks.d/: $f"; done
+
 pass "the plugins column's task is installed off and enabled; its reporter sends green, yellow, or nothing when GitHub is not reached, valid 31 hours, after a wait drawn at random"

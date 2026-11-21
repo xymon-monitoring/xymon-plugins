@@ -3,7 +3,7 @@
 # ./xymon-plugin at the repository's top -- a link to this directory's
 # xymon-plugin -- installs it from the lines below, as any other.
 name: xymon-plugin
-version: 0.2.1
+version: 0.2.2
 summary: the installer of these plugins, installed beside them as one of them, so that what is installed and its version are known on the server
 manual: xymon-plugin.8
 

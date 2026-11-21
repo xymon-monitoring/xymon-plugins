@@ -834,11 +834,22 @@ need_home() {
 	fi
 }
 
-# fresh DIR -- DIR, emptied: an install replaces a plugin's directory as a
-# whole, so that a file a newer version no longer ships does not stay behind
-# to be imported. It holds only what the plugin ships, its VERSION and its
-# PLUGIN file.
-fresh() { rm -rf "$1" && mkdir -p "$1"; }
+# fresh DIR [KEEP] -- DIR, emptied: an install replaces a plugin's directory
+# as a whole, so that a file a newer version no longer ships does not stay
+# behind to be imported. It holds only what the plugin ships, its VERSION
+# and its PLUGIN file -- and KEEP, a name in it left in place: the task file
+# tasks.d/ links to, which xymonlaunch would otherwise find gone, drop the
+# task and stop it, and not notice it back.
+fresh() {
+	if [ -z "${2:-}" ] || [ ! -d "$1" ] || [ -L "$1" ]; then
+		rm -rf "$1" && mkdir -p "$1"
+		return
+	fi
+	for f in "$1"/* "$1"/.[!.]* "$1"/..?*; do
+		{ [ -e "$f" ] || [ -L "$f" ]; } || continue
+		[ "$f" = "$1/$2" ] || rm -rf "$f" || return 1
+	done
+}
 
 # open_dir [-1] DIR -- what is closed to other users in DIR, or with -1 in
 # DIR alone, opened to them as far as its owner may use it: a directory
@@ -1162,9 +1173,10 @@ merge() {
 		cp -f "$3" "$md.new" && chmod 644 "$md.new" && cp -f "$3" "$ms" || exit 1
 		echo "$md is kept as yours; this version's differs, and is beside it: diff $md $md.new"
 	elif cmp -s "$md" "$mb"; then
-		# Unlinked first: written as a new file, never into one a hard
-		# link shares with a file outside the plugin's directory.
-		rm -f "$md" && cp -f "$3" "$md" && chmod 644 "$md" && cp -f "$3" "$ms" && rm -f "$mb" || exit 1
+		# Written as a new file renamed over it: never into one a hard
+		# link shares with a file outside the plugin's directory, and never
+		# missing, for a link tasks.d/ has to it.
+		cp -f "$3" "$md.tmp" && chmod 644 "$md.tmp" && mv -f "$md.tmp" "$md" && cp -f "$3" "$ms" && rm -f "$mb" || exit 1
 		echo "$md, unedited, is replaced by this version's"
 		MCHANGED=1
 	elif cmp -s "$mb" "$3"; then
@@ -1185,7 +1197,7 @@ merge() {
 				echo "  This version's change:"
 				diff "$mb" "$3" | sed -e 's/^/    /'
 				if offer "  They merge without conflict. Apply both?"; then
-					rm -f "$md.old" && mv -f "$md" "$md.old" && mv -f "$mm" "$md" && chmod 644 "$md" \
+					rm -f "$md.old" && cp "$md" "$md.old" && chmod 644 "$mm" && mv -f "$mm" "$md" \
 						&& cp -f "$3" "$ms" && rm -f "$mb" || exit 1
 					echo "$md has both changes; yours before is $md.old: remove it once checked"
 					MCHANGED=1
@@ -1216,7 +1228,9 @@ task() {
 	if [ -f "$link" ] && [ ! -L "$link" ]; then
 		on=1
 		rm -f "$EXTROOT/.$1.tasks.cfg"
-		mv "$link" "$tf" || exit 1
+		# Copied, not moved: it stays where xymonlaunch reads it until the
+		# link is renamed over it.
+		cp "$link" "$tf.tmp" && mv -f "$tf.tmp" "$tf" || exit 1
 		echo "keeping $link, moved to $tf"
 		merge "$1" tasks.cfg "$this"
 	elif [ -f "$EXTROOT/.$1.tasks.cfg" ]; then
@@ -1233,11 +1247,21 @@ task() {
 		sed -e '/^[[:space:]]*DISABLED[[:space:]]*$/d' "$tf" > "$tf.new" && mv "$tf.new" "$tf" && chmod 644 "$tf" || exit 1
 		echo "$1's task was DISABLED: it is off from now on, by its link"
 	fi
-	rm -f "$link"
-	if [ -n "$on" ]; then
-		ln -s "$XYMONHOME/ext/$1/tasks.cfg" "$link" || exit 1
+	# A link already right is left: removed and made again, xymonlaunch
+	# could read tasks.d/ between the two, and stop the task.
+	if [ -n "$on" ] && [ -L "$link" ] && [ "$(readlink "$link")" = "$XYMONHOME/ext/$1/tasks.cfg" ]; then
+		echo "$1's task is on, as it was"
+	elif [ -n "$on" ]; then
+		# Made under a name xymonlaunch skips, a dot first, and renamed
+		# over what is there: tasks.d/ never lacks it.
+		lt=$TASKDIR/.$1.cfg.tmp
+		# mv would put it inside a directory, or one a link names: a link
+		# goes first, a directory stops the install.
+		if [ -d "$link" ]; then rm -f "$link" || exit 1; fi
+		rm -f "$lt" && ln -s "$XYMONHOME/ext/$1/tasks.cfg" "$lt" && mv -f "$lt" "$link" || exit 1
 		echo "$1's task is on, as it was"
 	else
+		rm -f "$link"
 		echo "$1's task is off: XYMONHOME=$XYMONHOME ./xymon-plugin enable --server $1 turns it on"
 	fi
 }
@@ -1744,8 +1768,16 @@ install_server() {
 	# The task file an admin may have enabled, and the web server snippets
 	# an admin may have edited, outlive the directory.
 	# A link where one is set aside would take it elsewhere: removed first.
+	# A real file is copied aside and stays, so that the link tasks.d/ has
+	# to it never points nowhere; task puts the copy back over it.
 	if [ -L "$EXTROOT/.$1.tasks.cfg" ]; then rm -f "$EXTROOT/.$1.tasks.cfg" || exit 1; fi
-	if [ -f "$ext/tasks.cfg" ]; then mv "$ext/tasks.cfg" "$EXTROOT/.$1.tasks.cfg" || exit 1; fi
+	keep=
+	if [ -f "$ext/tasks.cfg" ] && [ ! -L "$ext/tasks.cfg" ] && [ -n "$(field "$1" task)" ]; then
+		cp "$ext/tasks.cfg" "$EXTROOT/.$1.tasks.cfg" || exit 1
+		keep=tasks.cfg
+	elif [ -f "$ext/tasks.cfg" ]; then
+		mv "$ext/tasks.cfg" "$EXTROOT/.$1.tasks.cfg" || exit 1
+	fi
 	# And the task file as the install before wrote it, which merge meets
 	# it with: a real directory and a real file only.
 	rm -f "$EXTROOT/.$1.tasks.cfg.shipped" || exit 1
@@ -1774,8 +1806,10 @@ install_server() {
 			mv "$ext/.shipped/$c" "$EXTROOT/.$1.$c.shipped" || exit 1
 		fi
 	done
-	fresh "$ext" || exit 1
+	fresh "$ext" "$keep" || exit 1
+	# Kept, not made anew, it may be one made under umask 077.
 	open_dir -1 "$EXTROOT"
+	open_dir -1 "$ext"
 	# PLUGIN first, VERSION last: a plugin's directory with its PLUGIN file
 	# and no VERSION is an install that did not end, which outdated says.
 	record "$1" "$ext"
@@ -1915,7 +1949,7 @@ drop_task() {
 			rm -f "$l"
 		fi
 	done
-	rm -f "$EXTROOT/.$1.tasks.cfg"
+	rm -f "$EXTROOT/.$1.tasks.cfg" "$EXTROOT/$1/tasks.cfg"
 }
 
 # with_installed ROOT -- LIST, and the plugins installed under ROOT with a
