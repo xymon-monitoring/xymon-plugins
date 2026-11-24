@@ -67,6 +67,47 @@ a tree in doubt; the dialogue offering client trees; a client's
 authentication (#29); `declared()` staging `client-files:` for `/plugins`;
 an `ext/` owned but not writable (a raw `mkdir` error today).
 
+## Under study: a plugin's pieces by role
+
+Raised 2026-11-24 while designing `clientage`'s server part: the client
+collects, the server processes, as Xymon does for its own columns. A
+plugin would declare pieces by role rather than parts by place; each role
+has one natural place in Xymon, which the installer would know, and the
+place (client or server) follows from the role. Nothing is decided: to
+analyse, with alternatives, before `clientage` (step 2) and the column
+(step 3) go on. Both read in it: `clientage` collects `[clock]` (already
+in the client message) and is analysed on the server from `clntstamp`;
+updates are collected on each host (the versions in its tree, no network)
+and analysed on the server (one GitHub query, colours for every host),
+which is the "later" of #186's "GitHub first, the server later".
+
+The roles, from Xymon's sources (`xymond/`, `xymond/etcfiles/`):
+
+| role | Xymon's own | where a plugin's piece would go |
+|---|---|---|
+| collect, on the host | `xymonclient.sh`'s sections | a script in the client's `local/`: a `[local:NAME]` section of the client message |
+| collect, from the server | `xymonnet`; `checks/` arista, ciscoasa | a server task polling the devices |
+| collect, set by the server | `client-local.cfg` | its section in that file |
+| transport | messages `client`, `status`, `data`, `notes`; xymond's channels `client`, `status`, `stachg`, `data`, `page`, `notes`, `enadis`, `clichg`, `user` | (Xymon's) |
+| analyse: data to colour | `xymond_client`, `analysis.cfg` | a worker on the `client` channel (`xymond_channel`), its thresholds per host on the server |
+| graph: storage | `xymond_rrd`, `rrddefinitions.cfg`, `TEST2RRD`, `NCV_*` | a setting in `xymonserver.d/` |
+| graph: drawing | `showgraph`, `graphs.cfg` | a file in `graphs.d/` (read by the shipped `graphs.cfg`) |
+| correlate | `combostatus`, `combo.cfg`; `depends`/`route` in `hosts.cfg` | a combination rule |
+| alert | `xymond_alert`, `alerts.cfg`, `holidays.cfg` | rarely: the administrator's choice |
+| history, raw data kept | `xymond_history`, `xymond_hostdata` | nothing: automatic |
+| column documentation | `columndoc.csv` | its column's line |
+| views, reports | `xymongen`, `critical.cfg`, `xymonmenu.cfg`; availability reports | rarely |
+| use, outside Xymon | xymonapi, -mcp, -rag, -agent | the tools part, as today |
+
+To settle: whether `PLUGIN` declares roles (`collect:`, `analyse:`,
+`graph:`, `columndoc:` ...) in place of or beside `server-*`/`client-*`/
+`tools-*`; how the installer places each (links from `ext/NAME`, as for
+tasks); how a worker on a channel is started (a server task running
+`xymond_channel`); what of #193 (clientage's client part sending its own
+colour) stays. Refused on the way: `timediff`, which Xymon already covers
+(`CLOCK` in `analysis.cfg` for a client against the server; the `ntp`
+test of `xymonnet` for the server against NTP).
+
 ## Decided, to build
 
 - **One manual page per part** (2026-11-23): tools in section 1 (their
