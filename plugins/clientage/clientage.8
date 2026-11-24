@@ -1,0 +1,45 @@
+.TH CLIENTAGE 8 "November 2026" "clientage 0.1.0" "Xymon plugins"
+.SH NAME
+clientage \- the age of a Xymon client's last message, as a column of its host
+.SH SYNOPSIS
+.B ./xymon-plugin install --client clientage
+.br
+.B ./xymon-plugin enable --client clientage
+.SH DESCRIPTION
+On a monitored host -- a standalone Xymon client, or a Xymon server's own
+client tree, the server named:
+.B "XYMONHOME=<server> ./xymon-plugin install --client clientage"
+-- its task, off until
+.BR "enable --client" ,
+runs every 5 minutes and sends the host's status
+.BR clientage :
+green while the Xymon client's last message is younger than 15 minutes,
+yellow up to 30, red beyond; yellow when there is no message yet, as just
+after the client starts. A client whose launcher still runs but whose
+.I xymonclient.sh
+hangs or fails is seen here before its columns go purple.
+.PP
+The age is read from the clock the Xymon client writes in its message,
+.IR $XYMONTMP/msg.MACHINEDOTS.txt ,
+the
+.B [clock]
+section's epoch, against
+.B "logfetch --clock"
+now: the same on every system Xymon runs on.
+.PP
+The two thresholds, in minutes, are the arguments of its task's
+.BR CMD ,
+in
+.IR ext/clientage/tasks.cfg ;
+an update keeps that file as edited.
+.SH FILES
+.TP
+.I $XYMONHOME/ext/clientage/
+The client part: the script and its task file.
+.TP
+.I $XYMONCLIENTLOGS/clientage-client.log
+Its log, one line a run; on a server's own client tree, in the server's logs.
+.SH SEE ALSO
+.BR xymon-plugin (8),
+.BR xymonclient.cfg (5),
+.BR logfetch (1)

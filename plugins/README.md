@@ -12,6 +12,7 @@ tests and its code. What installing one guarantees is in
 | [`xymonapi-mcp`](xymonapi-mcp/README.md) | an MCP server: read-only tools over the API for an AI tool |
 | [`xymonapi-rag`](xymonapi-rag/README.md) | search of Xymon's manual pages and history by meaning |
 | [`xymonapi-agent`](xymonapi-agent/README.md) | one command that asks an AI CLI about Xymon; the API's `/ask` |
+| [`clientage`](clientage/README.md) | the age of a Xymon client's last message, as a column of its host; the example of a client part |
 | [`xymon-plugin`](xymon-plugin/README.md) | the installer itself, and the `plugins` column that says when a newer release is out |
 
 How the API's plugins fit together:

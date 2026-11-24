@@ -1,0 +1,16 @@
+# What this plugin is, for the index in README.md and for whoever installs
+# it alone. One key per line, a key repeated for each line of a message;
+# ./xymon-plugin at the repository's top installs it from the lines below.
+# An example of a client part too: see CONTRIBUTING.md, which part where.
+name: clientage
+version: 0.1.0
+summary: the age of a Xymon client's last message, as a column of its host: green, yellow when late, red when much later
+manual: clientage.8
+
+# How ./xymon-plugin installs it: see xymonapi's PLUGIN file. On a
+# monitored host, a standalone client or a Xymon server's own client tree.
+client-short: the clientage column of this host, from its client's last message
+client-files: clientage-client.sh
+client-manual: clientage.8
+client-task: clientage-client.tasks
+executable: clientage-client.sh

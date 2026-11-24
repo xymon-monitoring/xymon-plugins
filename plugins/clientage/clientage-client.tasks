@@ -1,0 +1,10 @@
+# The clientage column of this host, clientage(8): every 5 minutes, the age
+# of the Xymon client's last message, green up to the first number of
+# minutes, yellow up to the second, red beyond. Edit the two numbers to
+# change them; an update keeps the file as you left it.
+# Off once installed: ./xymon-plugin enable --client clientage.
+[clientage-client]
+	ENVFILE @XYMONHOME@/etc/xymonclient.cfg
+	CMD @XYMONHOME@/ext/clientage/clientage-client.sh 15 30
+	LOGFILE @LOGDIR@/clientage-client.log
+	INTERVAL 5m

@@ -147,8 +147,10 @@ export XYMON_PLUGINS_TREES="$s:$c:$o/server:$o/client:$q/client"
 x status
 [ "$rc" -eq 0 ] || fail "[S25] status with nothing named failed: $out"
 assert_contains "Xymon server $s:" "$out" "[S25] status lists the server found"
-assert_contains "Xymon client $c:
-  xymon-plugin: $version installed, off; this copy has $version" "$out" "[S25] status lists the standalone client tree found, with what it holds"
+assert_contains "Xymon client $c:" "$out" "[S25] status lists the standalone client tree found"
+# The client tree's section alone: its lines until the next heading.
+sec=$(printf '%s\n' "$out" | awk -v h="Xymon client $c:" '$0 == h { on = 1; next } on && /^[^ ]/ { on = 0 } on { print }')
+assert_contains "  xymon-plugin: $version installed, off; this copy has $version" "$sec" "[S25] with what it holds"
 assert_contains "Its client $o/client:" "$out" "[S25] a server's own client tree is said in its server's section"
 assert_not_contains "Xymon client $o/client" "$out" "[S25] and not as a standalone client"
 assert_contains "Xymon client $q/client:
