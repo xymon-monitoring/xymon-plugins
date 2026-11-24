@@ -1443,6 +1443,23 @@ version() {
 	printf '%s\n' "$(field "$1" version)" > "$2/VERSION" && chmod 644 "$2/VERSION"
 }
 
+# twin PLUGIN -- the plugin's directory in the other Xymon tree of this
+# server, where its other Xymon part goes (S36): the server's own client
+# tree for a server part, the server for a client part there; nothing for
+# a standalone client, the tools, or under DESTDIR. The two parts share one
+# manual page, NAME.8 (S20).
+twin() {
+	[ -z "$DESTDIR" ] || return 0
+	if [ -n "$OWNOF" ]; then printf '%s\n' "$OWNOF/ext/$1"
+	elif [ "$TPART" = server ]; then
+		tw=$(xch "$XYMONHOME")
+		case $tw in /*) ;; *) return 0 ;; esac
+		case $tw in *'$'*) return 0 ;; esac
+		tw=$(CDPATH='' cd -- "$tw" 2>/dev/null && pwd) || return 0
+		printf '%s\n' "$tw/ext/$1"
+	fi
+}
+
 # manual PLUGIN PAGE DIR MANROOT FINAL -- the page kept in the plugin's
 # directory DIR, and linked from its section's directory under MANROOT,
 # without DESTDIR, found inside it -- with MANROOT empty, not linked; the
@@ -1460,6 +1477,10 @@ manual() {
 	[ -n "$4" ] || return 0
 	sec=$(inside "$4/man${2##*.}") || exit 1
 	if { [ -e "$sec/$2" ] || [ -L "$sec/$2" ]; } && [ "$(readlink "$sec/$2" 2>/dev/null)" != "$5/$2" ]; then
+		# The same page of its other part, in the server's other tree:
+		# shared, left as it is.
+		tw=$(twin "$1")
+		[ -z "$tw" ] || [ "$(readlink "$sec/$2" 2>/dev/null)" != "$tw/$2" ] || return 0
 		echo "$4/man${2##*.}/$2 is another's, left as it is: $1's manual page is read as man $5/$2"
 		return 0
 	fi
@@ -2765,7 +2786,12 @@ drop_manual() {
 	m=$(inside "$2/man${1##*.}") || exit 1
 	m=$m/$1
 	if [ -L "$m" ]; then
-		[ "$(readlink "$m")" = "$3/$1" ] && rm -f "$m"
+		if [ "$(readlink "$m")" = "$3/$1" ]; then
+			# The page its other part shares, still there in the server's
+			# other tree: the link points at that copy, not gone.
+			tw=; [ "$2" != "$MANDIR" ] || tw=$(twin "${3##*/}")
+			if [ -n "$tw" ] && [ -f "$tw/$1" ]; then rm -f "$m" && ln -s "$tw/$1" "$m"; else rm -f "$m"; fi
+		fi
 	elif [ -n "$4" ]; then
 		rm -f "$m"
 	fi

@@ -42,8 +42,7 @@ Task names by part (#190) and a server's own client tree (S36) are built.
 Later, perhaps: an installation named by its top directory (`XYMONTOPDIR`,
 holding `server/` and `client/`), as a shorthand for its server.
 
-1. **One manual page per part** (below).
-2. **`clientage`, an example plugin with all three parts**: the client
+1. **`clientage`, an example plugin with all three parts**: the client
    part sends `clientage`, the age of the client's last message (green
    to 15 min, yellow to 30, red beyond); the server part one `clients`
    column on the server's host listing the clients behind; the tools part a
@@ -53,7 +52,7 @@ holding `server/` and `client/`), as a shorthand for its server.
    the tools part in Python over `xymonapi_client.py`, not shell and curl;
    the client part's age from the message's `[clock]` epoch, `stat` not
    being portable; its client part the first real one to try S36 with.
-3. **xymon-plugin's column over the server and its client tree**, and
+2. **xymon-plugin's column over the server and its client tree**, and
    `verify` and `outdated` with no part named covering that tree, as
    `status` does: the column's first line names the trees; `status` warns when a standalone
    client on the same machine sends under the server's host name. To ask:
@@ -69,12 +68,6 @@ an `ext/` owned but not writable (a raw `mkdir` error today).
 
 ## Decided, to build
 
-- **One manual page per part** (2026-11-23): tools in section 1 (their
-  commands), the server `NAME.8`, the client `NAME-client.8`, each with SEE
-  ALSO to the others; each part installs and removes its own page only.
-  xymon-plugin's client page is a short one pointing to `xymon-plugin.8`.
-  SPEC first: it changes S4 and S35, and xymon-plugin's `PLUGIN`, whose
-  `client-manual:` names `xymon-plugin.8` today, as its server part does.
 - **`ext/` as a full inventory** (2026-11-23): every entry is a plugin's
   install or listed as the site's own in a file the administrator writes
   (proposed `etc/xymon-plugin.d/local.cfg`, a name or simple pattern a
@@ -212,6 +205,10 @@ Each becomes a numbered rule with the pull request that brings its test.
 
 ## Refused
 
+- **One manual page per part** (`NAME.8` the server's, `NAME-client.8`,
+  2026-11-23): replaced on 2026-11-24 by one page for a plugin's Xymon
+  parts, `NAME.8`, shared on a server holding both; `man NAME` stays the
+  page people type, and a suffix there would only mirror the task names.
 - **A server's client tree's ext/ held to the server's ext/ owner, or
   root**: RPM gives client/ext to xymon and the server's tree to root, so
   it was refused with a chown against the package, and root accepted let a

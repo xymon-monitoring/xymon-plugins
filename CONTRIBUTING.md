@@ -81,6 +81,10 @@ where it runs:
   on the Xymon server too: the server's host is monitored through its own
   client tree, which is planned to take client parts (`docs/PLAN.md`). Do
   not copy it into the server part.
+- A plugin has one manual page for its Xymon parts, `NAME.8`, which its
+  `server-manual:` and `client-manual:` both name, with a section for each
+  part; its tools' commands each have a page in section 1, as a person
+  runs them (S20).
 - A part's task is named after it (S6): its task file has the one section
   `[NAME-server]` or `[NAME-client]`, and the installer links it under the
   same name, `NAME-server.cfg` or `NAME-client.cfg`. Only xymon-plugin's own

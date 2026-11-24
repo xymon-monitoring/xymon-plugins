@@ -325,7 +325,13 @@ An install copies the plugin's `PLUGIN` file into its installed directory,
 beside `VERSION`, and keeps its manual page there too, linked from
 `MANDIR` where the page's name is free or that link already: anything else
 there -- a page of the administrator's, another's link, a directory -- is
-left as it is and said, the install going on. Uninstalling, enabling,
+left as it is and said, the install going on. A plugin has one page for
+its Xymon parts, `NAME.8`, which its server and client parts both name,
+and one in section 1 for each of its tools' commands. On a server holding
+both, the server part and its client part in the server's own client tree
+(S36), the link is the one the first install made, the other's install
+leaving it, said nothing of; the part removed first points it at the
+other's copy, the last takes it. Uninstalling, enabling,
 disabling, reporting `status` and checking what needs a plugin, and in
 what order to remove several, read that copy, not the checkout's, so that
 a checkout of another version, or one the plugin is gone from, still

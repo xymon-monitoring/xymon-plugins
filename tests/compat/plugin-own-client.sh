@@ -48,7 +48,8 @@ mkdir -p "$r/plugins/oc" "$r/plugins/both"
 printf 'name: oc\nversion: 1.0.0\nsummary: a test\nclient-files: check.sh\nclient-task: oc.tasks\n' > "$r/plugins/oc/PLUGIN"
 printf '#!/bin/sh\nexit 0\n' > "$r/plugins/oc/check.sh"
 printf '[oc-client]\n\tENVFILE @XYMONHOME@/etc/xymonclient.cfg\n\tCMD @XYMONHOME@/ext/oc/check.sh\n\tLOGFILE @LOGDIR@/oc-client.log\n\tINTERVAL 5m\n' > "$r/plugins/oc/oc.tasks"
-printf 'name: both\nversion: 1.0.0\nsummary: a test\nserver-files: s.sh\nserver-task: s.tasks\nclient-files: c.sh\nclient-task: c.tasks\n' > "$r/plugins/both/PLUGIN"
+printf 'name: both\nversion: 1.0.0\nsummary: a test\nserver-files: s.sh\nserver-task: s.tasks\nserver-manual: both.8\nclient-files: c.sh\nclient-task: c.tasks\nclient-manual: both.8\n' > "$r/plugins/both/PLUGIN"
+printf '.TH BOTH 8\n' > "$r/plugins/both/both.8"
 printf '#!/bin/sh\nexit 0\n' > "$r/plugins/both/s.sh"; cp "$r/plugins/both/s.sh" "$r/plugins/both/c.sh"
 mkdir -p "$r/plugins/dep"
 printf 'name: dep\nversion: 1.0.0\nsummary: a test\nclient-files: d.sh\nclient-needs: xymon-plugin\n' > "$r/plugins/dep/PLUGIN"
@@ -102,6 +103,19 @@ x remove --client both XYMONHOME="$s"; ok "remove --client both"
 [ -L "$s/etc/tasks.d/both-server.cfg" ] || fail "[S36] remove --client took the server part's link"
 { [ -e "$s/etc/tasks.d/both-client.cfg" ] || [ -L "$s/etc/tasks.d/both-client.cfg" ]; } && fail "[S36] remove --client left the client part's link"
 [ -d "$s/ext/both" ] || fail "[S36] remove --client took the server part"
+# One manual page for both parts (S20): the link the first install made,
+# the other's install leaving it, said nothing of; the part removed first
+# pointing it at the other's copy, the last taking it.
+pg=$work/man/man8/both.8
+assert_equal "$s/ext/both/both.8" "$(readlink "$pg")" "[S20] the server part's page linked"
+x install --client both XYMONHOME="$s"; ok "install --client both, the page shared"
+assert_not_contains "another's" "$out" "[S20] the client part's install leaves the shared page, saying nothing"
+assert_equal "$s/ext/both/both.8" "$(readlink "$pg")" "[S20] the link the first install made kept"
+x remove --server both XYMONHOME="$s"; ok "remove --server both, the client part staying"
+assert_equal "$c/ext/both/both.8" "$(readlink "$pg")" "[S20] the page then the client part's copy"
+x remove --client both XYMONHOME="$s"; ok "remove --client both, the last"
+{ [ -e "$pg" ] || [ -L "$pg" ]; } && fail "[S20] the last part removed left the page's link"
+x install --server both XYMONHOME="$s"; ok "install --server both again"
 
 # The server's tasks.cfg is the one enable reads: one that does not read
 # tasks.d/, or that has a task of the name already, refused (S13, S6).
